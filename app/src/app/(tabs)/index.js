@@ -11,14 +11,14 @@ import { checkMessage } from '../../lib/api';
 import { addHistory, getHistory } from '../../lib/storage';
 import { timeAgo } from '../../lib/time';
 import PageMeta from '../../components/PageMeta';
+import { useLanguage } from '../../i18n';
 
 // The message box starts at about 3 lines and grows with the text, up to a limit.
 const INPUT_MIN = 110;
 const INPUT_MAX = 280;
 
-const EXAMPLE = 'USPS: Your package could not be delivered. Confirm your address within 24 hours or it will be returned: usps-redelivery-help.top/track';
-
 export default function CheckScreen() {
+  const { t, lang, toggle } = useLanguage();
   const [text, setText] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -33,8 +33,8 @@ export default function CheckScreen() {
   // The free server sleeps when idle, so the first check can be slow. Say so.
   useEffect(() => {
     if (!loading) return setSlow(false);
-    const t = setTimeout(() => setSlow(true), 4000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setSlow(true), 4000);
+    return () => clearTimeout(timer);
   }, [loading]);
 
   async function paste() {
@@ -55,13 +55,13 @@ export default function CheckScreen() {
     setError('');
     setResult(null);
     try {
-      const data = await checkMessage(text);
+      const data = await checkMessage(text, lang);
       setResult(data);
       await addHistory(text, data);
       setRecent((await getHistory()).slice(0, 3));
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     } catch {
-      setError("We couldn't check this right now. Make sure you're connected to the internet and try again.");
+      setError(t.check.error);
     } finally {
       setLoading(false);
     }
@@ -75,65 +75,70 @@ export default function CheckScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView ref={scrollRef} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
-            <Text style={styles.brand}>Second Look</Text>
-            <Link href="/about" asChild>
-              <Pressable style={styles.aboutBtn} hitSlop={8} accessibilityLabel="About and privacy">
-                <Ionicons name="information-circle-outline" size={22} color={C.text} />
-                <Text style={styles.aboutText}>About</Text>
+            <Text style={styles.brand} accessibilityRole="header">Second Look</Text>
+            <View style={styles.headerRight}>
+              <Pressable style={styles.aboutBtn} hitSlop={8} onPress={toggle} accessibilityRole="button" accessibilityLabel={`Language: ${t.languageName}. Switch to ${t.switchTo}`}>
+                <Ionicons name="globe-outline" size={22} color={C.text} />
+                <Text style={styles.aboutText}>{t.switchTo}</Text>
               </Pressable>
-            </Link>
+              <Link href="/about" asChild>
+                <Pressable style={styles.aboutBtn} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.about.title}>
+                  <Ionicons name="information-circle-outline" size={22} color={C.text} />
+                  <Text style={styles.aboutText}>{t.check.about}</Text>
+                </Pressable>
+              </Link>
+            </View>
           </View>
 
-          <Text style={type.h1}>Check a message</Text>
-          <Text style={[type.sub, styles.intro]}>
-            Got a text, email or link that seems off? Copy it, paste it here, and we'll tell you if it looks like a scam.
-          </Text>
+          <Text style={type.h1} accessibilityRole="header">{t.check.title}</Text>
+          <Text style={[type.sub, styles.intro]}>{t.check.intro}</Text>
 
           <TextInput
             style={[styles.input, { height: inputHeight }]}
             onContentSizeChange={e => setInputHeight(Math.min(INPUT_MAX, Math.max(INPUT_MIN, e.nativeEvent.contentSize.height + 2)))}
             scrollEnabled={inputHeight >= INPUT_MAX}
             multiline
-            placeholder="Paste the message here"
+            placeholder={t.check.placeholder}
             placeholderTextColor={C.faint}
             value={text}
-            onChangeText={t => { setText(t); setResult(null); }}
+            onChangeText={v => { setText(v); setResult(null); }}
             autoCapitalize="none"
             autoCorrect={false}
-            accessibilityLabel="Message to check"
+            accessibilityLabel={t.check.inputLabel}
           />
 
           <View style={styles.row}>
-            <Pressable style={({ pressed }) => [button.secondary, styles.half, pressed && styles.pressed]} onPress={text ? startOver : paste}>
+            <Pressable style={({ pressed }) => [button.secondary, styles.half, pressed && styles.pressed]} onPress={text ? startOver : paste} accessibilityRole="button">
               <View style={styles.btnInner}>
                 <Ionicons name={text ? 'close' : 'clipboard-outline'} size={20} color={C.text} />
-                <Text style={button.secondaryText}>{text ? 'Clear' : 'Paste'}</Text>
+                <Text style={button.secondaryText}>{text ? t.check.clear : t.check.paste}</Text>
               </View>
             </Pressable>
             <Pressable
               style={({ pressed }) => [button.primary, styles.half, !canCheck && !loading && styles.disabled, pressed && styles.pressed]}
               disabled={!canCheck}
               onPress={check}
+              accessibilityRole="button"
             >
-              <Text style={button.primaryText}>{loading ? 'Checking...' : 'Check it'}</Text>
+              <Text style={button.primaryText}>{loading ? t.check.checking : t.check.checkIt}</Text>
             </Pressable>
           </View>
 
           {loading && <View style={{ marginTop: 28 }}><ResultSkeleton /></View>}
-          {slow && <Text style={styles.note}>Still checking. The first check of the day can take up to 30 seconds.</Text>}
+          {slow && <Text style={styles.note}>{t.check.slow}</Text>}
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
           {!text && !result && (
-            <Pressable onPress={() => setText(EXAMPLE)} hitSlop={8} style={styles.exampleLink}>
-              <Text style={styles.exampleText}>Not sure how it works? Try an example</Text>
+            <Pressable onPress={() => setText(t.check.example)} hitSlop={8} style={styles.exampleLink} accessibilityRole="button">
+              <Text style={styles.exampleText}>{t.check.tryExample}</Text>
             </Pressable>
           )}
 
           {result && (
             <View style={{ marginTop: 28 }}>
               <ResultCard result={result} />
-              <Pressable style={({ pressed }) => [button.secondary, { marginTop: 14 }, pressed && styles.pressed]} onPress={startOver}>
-                <Text style={button.secondaryText}>Check another message</Text>
+              <Pressable style={({ pressed }) => [button.secondary, { marginTop: 14 }, pressed && styles.pressed]} onPress={startOver} accessibilityRole="button">
+                <Text style={button.secondaryText}>{t.check.checkAnother}</Text>
               </Pressable>
             </View>
           )}
@@ -141,21 +146,22 @@ export default function CheckScreen() {
           {!result && recent.length > 0 && (
             <View style={styles.recent}>
               <View style={styles.recentHead}>
-                <Text style={type.h2}>Recent</Text>
-                <Link href="/history" style={styles.seeAll}>See all</Link>
+                <Text style={type.h2} accessibilityRole="header">{t.check.recent}</Text>
+                <Link href="/history" style={styles.seeAll}>{t.check.seeAll}</Link>
               </View>
               {recent.map(e => {
                 const v = VERDICTS[e.result.verdict];
+                const label = t.verdicts[e.result.verdict].label;
                 return (
-                  <Pressable key={e.id} style={({ pressed }) => [styles.recentRow, pressed && styles.pressed]} onPress={() => router.push(`/result/${e.id}`)}>
+                  <Pressable key={e.id} style={({ pressed }) => [styles.recentRow, pressed && styles.pressed]} onPress={() => router.push(`/result/${e.id}`)} accessibilityRole="button">
                     <View style={[styles.recentIcon, { backgroundColor: v.color }]}>
                       <Ionicons name={v.icon} size={16} color="#fff" />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.recentVerdict, { color: v.color }]}>{v.label}</Text>
+                      <Text style={[styles.recentVerdict, { color: v.color }]}>{label}</Text>
                       <Text style={styles.recentText} numberOfLines={1}>{e.text}</Text>
                     </View>
-                    <Text style={styles.recentTime}>{timeAgo(e.at)}</Text>
+                    <Text style={styles.recentTime}>{timeAgo(e.at, t.time)}</Text>
                   </Pressable>
                 );
               })}
@@ -172,6 +178,7 @@ const styles = StyleSheet.create({
   container: { padding: 24, paddingTop: 12, paddingBottom: 40 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 },
   brand: { fontSize: T.M, fontWeight: '800', color: C.text },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   aboutBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6 },
   aboutText: { fontSize: T.M, fontWeight: '600', color: C.text },
   intro: { marginTop: 8, marginBottom: 22 },
@@ -187,7 +194,7 @@ const styles = StyleSheet.create({
   note: { ...type.sub, fontSize: T.S, textAlign: 'center', marginTop: 12 },
   error: { ...type.body, fontSize: T.M, color: VERDICTS.danger.color, marginTop: 14 },
   exampleLink: { marginTop: 20, alignSelf: 'center' },
-  exampleText: { fontSize: T.M, fontWeight: '600', color: C.text, textDecorationLine: 'underline' },
+  exampleText: { fontSize: T.M, fontWeight: '600', color: C.text, textDecorationLine: 'underline', textAlign: 'center' },
   recent: { marginTop: 40 },
   recentHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 },
   seeAll: { fontSize: T.M, fontWeight: '600', color: C.text, textDecorationLine: 'underline' },

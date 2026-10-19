@@ -6,29 +6,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { C, button, type, T } from '../components/theme';
 import { setOnboarded } from '../lib/storage';
 import PageMeta from '../components/PageMeta';
+import LanguagePicker from '../components/LanguagePicker';
+import { fill, useLanguage } from '../i18n';
 
-const STEPS = [
-  {
-    icon: 'shield-checkmark',
-    title: 'A second look before you click',
-    body: 'Scam texts and emails are designed to look real. Second Look checks them for you and explains what it finds, in plain words.',
-  },
-  {
-    icon: 'clipboard',
-    title: 'Copy, paste, check',
-    body: 'Got a message that feels off? Copy it, paste it into the app, and tap Check it. You will see right away whether it looks safe.',
-  },
-  {
-    icon: 'lock-closed',
-    title: 'Your messages stay private',
-    body: 'We check the message and then forget it. Nothing is stored on our side. Your history is saved only on this phone, and you can delete it anytime.',
-  },
-];
+const ICONS = ['shield-checkmark', 'clipboard', 'lock-closed'];
 
 export default function Onboarding() {
+  const { t } = useLanguage();
+  const o = t.onboarding;
   const [i, setI] = useState(0);
-  const step = STEPS[i];
-  const last = i === STEPS.length - 1;
+  const step = o.steps[i];
+  const last = i === o.steps.length - 1;
 
   async function next() {
     if (!last) return setI(i + 1);
@@ -41,25 +29,32 @@ export default function Onboarding() {
       <PageMeta title="Welcome" description={'Second Look checks suspicious messages before you click. Learn how it works and how your messages stay private.'} />
       <View style={styles.top}>
         {i > 0 ? (
-          <Pressable onPress={() => setI(i - 1)} hitSlop={10} style={styles.back}>
+          <Pressable onPress={() => setI(i - 1)} hitSlop={10} style={styles.back} accessibilityRole="button">
             <Ionicons name="chevron-back" size={22} color={C.text} />
-            <Text style={styles.backText}>Back</Text>
+            <Text style={styles.backText}>{o.back}</Text>
           </Pressable>
         ) : <View />}
-        <Text style={styles.count}>{i + 1} of {STEPS.length}</Text>
+        <Text style={styles.count}>{fill(o.stepOf, { n: i + 1, total: o.steps.length })}</Text>
       </View>
 
       <View style={styles.content}>
         <View style={styles.icon}>
-          <Ionicons name={step.icon} size={44} color="#fff" />
+          <Ionicons name={ICONS[i]} size={44} color="#fff" />
         </View>
-        <Text style={[type.h1, styles.title]}>{step.title}</Text>
+        <Text style={[type.h1, styles.title]} accessibilityRole="header">{step.title}</Text>
         <Text style={[type.body, styles.body]}>{step.body}</Text>
+
+        {i === 0 && (
+          <View style={styles.language}>
+            <Text style={styles.languageLabel}>{o.chooseLanguage}</Text>
+            <LanguagePicker />
+          </View>
+        )}
       </View>
 
       <View style={styles.footer}>
-        <Pressable style={({ pressed }) => [button.primary, pressed && { opacity: 0.75 }]} onPress={next}>
-          <Text style={button.primaryText}>{last ? 'Get started' : 'Next'}</Text>
+        <Pressable style={({ pressed }) => [button.primary, pressed && { opacity: 0.75 }]} onPress={next} accessibilityRole="button">
+          <Text style={button.primaryText}>{last ? o.start : o.next}</Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -76,5 +71,7 @@ const styles = StyleSheet.create({
   icon: { width: 88, height: 88, borderRadius: 24, backgroundColor: C.text, alignItems: 'center', justifyContent: 'center' },
   title: { marginTop: 28 },
   body: { marginTop: 14, color: C.muted },
+  language: { marginTop: 32 },
+  languageLabel: { fontSize: T.M, fontWeight: '700', color: C.text, marginBottom: 10 },
   footer: { padding: 24 },
 });

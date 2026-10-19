@@ -8,22 +8,25 @@ import { RowSkeleton } from '../../components/Skeleton';
 import { clearHistory, getHistory, removeHistory } from '../../lib/storage';
 import { timeAgo } from '../../lib/time';
 import PageMeta from '../../components/PageMeta';
+import { fill, useLanguage } from '../../i18n';
 
 // RN Alert buttons don't work on web, so fall back to the browser's confirm there.
-function confirm(title, message, onYes) {
+function confirm(title, message, words, onYes) {
   if (Platform.OS === 'web') {
     if (window.confirm(`${title}\n\n${message}`)) onYes();
     return;
   }
   Alert.alert(title, message, [
-    { text: 'Cancel', style: 'cancel' },
-    { text: 'Delete', style: 'destructive', onPress: onYes },
+    { text: words.cancel, style: 'cancel' },
+    { text: words.delete, style: 'destructive', onPress: onYes },
   ]);
 }
 
 const PAGE_SIZE = 10;
 
 export default function HistoryScreen() {
+  const { t } = useLanguage();
+  const h = t.history;
   const [items, setItems] = useState(null);
   const [page, setPage] = useState(0);
   const scrollRef = useRef(null);
@@ -42,10 +45,10 @@ export default function HistoryScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <PageMeta title="History" description={'Your past message checks, saved only on this phone. Look at a result again or delete it anytime.'} />
       <ScrollView ref={scrollRef} contentContainerStyle={styles.container}>
-        <Text style={type.h1}>History</Text>
+        <Text style={type.h1} accessibilityRole="header">{h.title}</Text>
         <View style={styles.privacy}>
           <Ionicons name="lock-closed" size={16} color={C.muted} />
-          <Text style={styles.privacyText}>Saved only on this phone. We never keep your messages.</Text>
+          <Text style={styles.privacyText}>{h.privacy}</Text>
         </View>
 
         {items === null ? (
@@ -53,10 +56,10 @@ export default function HistoryScreen() {
         ) : items.length === 0 ? (
           <View style={styles.empty}>
             <Ionicons name="time-outline" size={40} color={C.faint} />
-            <Text style={[type.body, { textAlign: 'center', marginTop: 12 }]}>Nothing here yet.</Text>
-            <Text style={[type.sub, { textAlign: 'center', marginTop: 6 }]}>Messages you check will show up here so you can look at them again.</Text>
-            <Pressable style={({ pressed }) => [button.primary, { marginTop: 24, alignSelf: 'stretch' }, pressed && styles.pressed]} onPress={() => router.navigate('/')}>
-              <Text style={button.primaryText}>Check a message</Text>
+            <Text style={[type.body, { textAlign: 'center', marginTop: 12 }]}>{h.empty}</Text>
+            <Text style={[type.sub, { textAlign: 'center', marginTop: 6 }]}>{h.emptySub}</Text>
+            <Pressable style={({ pressed }) => [button.primary, { marginTop: 24, alignSelf: 'stretch' }, pressed && styles.pressed]} onPress={() => router.navigate('/')} accessibilityRole="button">
+              <Text style={button.primaryText}>{h.checkAMessage}</Text>
             </Pressable>
           </View>
         ) : (
@@ -65,14 +68,14 @@ export default function HistoryScreen() {
               const v = VERDICTS[e.result.verdict];
               return (
                 <View key={e.id} style={styles.row}>
-                  <Pressable style={({ pressed }) => [styles.rowMain, pressed && styles.pressed]} onPress={() => router.push(`/result/${e.id}`)}>
+                  <Pressable style={({ pressed }) => [styles.rowMain, pressed && styles.pressed]} onPress={() => router.push(`/result/${e.id}`)} accessibilityRole="button">
                     <View style={[styles.icon, { backgroundColor: v.color }]}>
                       <Ionicons name={v.icon} size={18} color="#fff" />
                     </View>
                     <View style={{ flex: 1 }}>
                       <View style={styles.rowTop}>
-                        <Text style={[styles.verdict, { color: v.color }]}>{v.label}</Text>
-                        <Text style={styles.time}>{timeAgo(e.at)}</Text>
+                        <Text style={[styles.verdict, { color: v.color }]}>{t.verdicts[e.result.verdict].label}</Text>
+                        <Text style={styles.time}>{timeAgo(e.at, t.time)}</Text>
                       </View>
                       <Text style={styles.text} numberOfLines={2}>{e.text}</Text>
                     </View>
@@ -80,8 +83,9 @@ export default function HistoryScreen() {
                   <Pressable
                     hitSlop={10}
                     style={styles.delete}
-                    accessibilityLabel="Delete this check"
-                    onPress={() => confirm('Delete this check?', 'It will be removed from this phone.', async () => { await removeHistory(e.id); load(); })}
+                    accessibilityRole="button"
+                    accessibilityLabel={h.deleteLabel}
+                    onPress={() => confirm(h.deleteOne, h.deleteOneBody, h, async () => { await removeHistory(e.id); load(); })}
                   >
                     <Ionicons name="trash-outline" size={22} color={C.muted} />
                   </Pressable>
@@ -95,19 +99,21 @@ export default function HistoryScreen() {
                   style={({ pressed }) => [button.secondary, styles.pageBtn, current === 0 && styles.disabled, pressed && styles.pressed]}
                   disabled={current === 0}
                   onPress={() => goTo(current - 1)}
-                  accessibilityLabel="Previous page"
+                  accessibilityRole="button"
+                  accessibilityLabel={h.newer}
                 >
                   <Ionicons name="chevron-back" size={20} color={C.text} />
-                  <Text style={button.secondaryText}>Newer</Text>
+                  <Text style={button.secondaryText}>{h.newer}</Text>
                 </Pressable>
-                <Text style={styles.pageText}>Page {current + 1} of {pages}</Text>
+                <Text style={styles.pageText}>{fill(h.pageOf, { n: current + 1, total: pages })}</Text>
                 <Pressable
                   style={({ pressed }) => [button.secondary, styles.pageBtn, current === pages - 1 && styles.disabled, pressed && styles.pressed]}
                   disabled={current === pages - 1}
                   onPress={() => goTo(current + 1)}
-                  accessibilityLabel="Next page"
+                  accessibilityRole="button"
+                  accessibilityLabel={h.older}
                 >
-                  <Text style={button.secondaryText}>Older</Text>
+                  <Text style={button.secondaryText}>{h.older}</Text>
                   <Ionicons name="chevron-forward" size={20} color={C.text} />
                 </Pressable>
               </View>
@@ -115,9 +121,10 @@ export default function HistoryScreen() {
 
             <Pressable
               style={({ pressed }) => [button.secondary, { marginTop: 28 }, pressed && styles.pressed]}
-              onPress={() => confirm('Delete all history?', 'Every saved check will be removed from this phone.', async () => { await clearHistory(); setPage(0); load(); })}
+              accessibilityRole="button"
+              onPress={() => confirm(h.deleteAllTitle, h.deleteAllBody, h, async () => { await clearHistory(); setPage(0); load(); })}
             >
-              <Text style={button.secondaryText}>Delete all history</Text>
+              <Text style={button.secondaryText}>{h.deleteAll}</Text>
             </Pressable>
           </>
         )}

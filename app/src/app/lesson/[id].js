@@ -7,11 +7,13 @@ import ChatBubble from '../../components/ChatBubble';
 import { getLesson } from '../../data/lessons';
 import { markLessonDone } from '../../lib/storage';
 import PageMeta from '../../components/PageMeta';
+import { fill, useLanguage } from '../../i18n';
 
 // One card at a time with big Back / Next buttons. No sideways swiping.
 export default function LessonScreen() {
   const { id } = useLocalSearchParams();
-  const lesson = getLesson(id);
+  const { t, lang } = useLanguage();
+  const lesson = getLesson(id, lang);
   const [i, setI] = useState(0);
 
   if (!lesson) return null;
@@ -34,10 +36,10 @@ export default function LessonScreen() {
           <View key={n} style={[styles.seg, n <= i && styles.segOn]} />
         ))}
       </View>
-      <Text style={styles.step}>{i + 1} of {lesson.cards.length}</Text>
+      <Text style={styles.step}>{fill(t.lesson.stepOf, { n: i + 1, total: lesson.cards.length })}</Text>
 
       <ScrollView contentContainerStyle={styles.body} key={i}>
-        <Text style={type.h2}>{card.title}</Text>
+        <Text style={type.h2} accessibilityRole="header">{card.title}</Text>
         {card.kind === 'text' && <Text style={[type.body, { marginTop: 14 }]}>{card.body}</Text>}
         {card.kind === 'example' && (
           <>
@@ -51,12 +53,12 @@ export default function LessonScreen() {
 
       <View style={styles.nav}>
         {i > 0 && (
-          <Pressable style={({ pressed }) => [button.secondary, styles.navBtn, pressed && styles.pressed]} onPress={() => setI(i - 1)}>
-            <Text style={button.secondaryText}>Back</Text>
+          <Pressable style={({ pressed }) => [button.secondary, styles.navBtn, pressed && styles.pressed]} onPress={() => setI(i - 1)} accessibilityRole="button">
+            <Text style={button.secondaryText}>{t.lesson.back}</Text>
           </Pressable>
         )}
-        <Pressable style={({ pressed }) => [button.primary, styles.navBtn, pressed && styles.pressed]} onPress={next}>
-          <Text style={button.primaryText}>{last ? 'Finish lesson' : 'Next'}</Text>
+        <Pressable style={({ pressed }) => [button.primary, styles.navBtn, pressed && styles.pressed]} onPress={next} accessibilityRole="button">
+          <Text style={button.primaryText}>{last ? t.lesson.finish : t.lesson.next}</Text>
         </Pressable>
       </View>
     </SafeAreaView>

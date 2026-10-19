@@ -6,9 +6,12 @@ import ResultCard from '../../components/ResultCard';
 import { Bone, ResultSkeleton } from '../../components/Skeleton';
 import { getHistoryEntry } from '../../lib/storage';
 import PageMeta from '../../components/PageMeta';
+import { Stack } from 'expo-router';
+import { fill, useLanguage } from '../../i18n';
 
 export default function SavedResultScreen() {
   const { id } = useLocalSearchParams();
+  const { t } = useLanguage();
   const [entry, setEntry] = useState(undefined);
   useEffect(() => { getHistoryEntry(id).then(setEntry); }, [id]);
 
@@ -23,14 +26,15 @@ export default function SavedResultScreen() {
     );
   }
   if (entry === null) {
-    return <Text style={[type.body, { padding: 24 }]}>This check was deleted.</Text>;
+    return <Text style={[type.body, { padding: 24 }]}>{t.saved.gone}</Text>;
   }
 
   return (
     <ScrollView style={{ backgroundColor: C.bg }} contentContainerStyle={styles.container}>
+      <Stack.Screen options={{ title: t.saved.title }} />
       <PageMeta title="Saved check" description={'A message you checked earlier with Second Look, with the verdict and the reasons behind it.'} />
       <Text style={type.label}>
-        Checked {new Date(entry.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+        {fill(t.saved.checkedOn, { date: new Date(entry.at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) })}
       </Text>
       <View style={styles.message}>
         <Text style={styles.messageText}>{entry.text}</Text>

@@ -1,8 +1,18 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { C, T } from '../components/theme';
+import { LanguageProvider, useLanguage } from '../i18n';
 
 export default function RootLayout() {
+  return (
+    <LanguageProvider>
+      <Screens />
+    </LanguageProvider>
+  );
+}
+
+function Screens() {
+  const { t } = useLanguage();
   return (
     <>
       <Stack
@@ -11,16 +21,16 @@ export default function RootLayout() {
           headerShadowVisible: false,
           headerStyle: { backgroundColor: C.bg },
           headerTitleStyle: { fontWeight: '700', fontSize: T.M },
-          headerBackTitle: 'Back',
+          headerBackTitle: t.lesson.back,
           contentStyle: { backgroundColor: C.bg },
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="lesson/[id]" options={{ title: '' }} />
-        <Stack.Screen name="quiz" options={{ title: 'Test your knowledge' }} />
-        <Stack.Screen name="result/[id]" options={{ title: 'Saved check' }} />
-        <Stack.Screen name="about" options={{ title: 'About & privacy', presentation: 'modal' }} />
+        <Stack.Screen name="quiz" options={{ title: t.quiz.title }} />
+        <Stack.Screen name="result/[id]" options={{ title: t.saved.title }} />
+        <Stack.Screen name="about" options={{ title: t.about.title, presentation: 'modal' }} />
       </Stack>
       <StatusBar style="dark" />
     </>

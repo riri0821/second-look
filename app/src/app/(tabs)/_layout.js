@@ -5,10 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { C, T } from '../../components/theme';
 import { isOnboarded } from '../../lib/storage';
+import { useLanguage } from '../../i18n';
 
 // Custom label so the larger text is never clipped by the default label box.
 const label = (text) => ({ color }) => (
-  <Text style={{ fontSize: T.S, lineHeight: 20, fontWeight: '600', color }}>{text}</Text>
+  <Text style={{ fontSize: T.S, lineHeight: 20, fontWeight: '600', color }} maxFontSizeMultiplier={1.3}>{text}</Text>
 );
 
 const icon = (name) => ({ color, focused }) => (
@@ -17,6 +18,7 @@ const icon = (name) => ({ color, focused }) => (
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
   const [onboarded, setOnboardedState] = useState(null);
   useEffect(() => { isOnboarded().then(setOnboardedState); }, []);
 
@@ -33,9 +35,9 @@ export default function TabsLayout() {
         tabBarStyle: { backgroundColor: C.bg, borderTopColor: C.border, height: 66 + insets.bottom, paddingTop: 6, paddingBottom: insets.bottom + 8 },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Check', tabBarLabel: label('Check'), tabBarIcon: icon('shield-checkmark') }} />
-      <Tabs.Screen name="learn" options={{ title: 'Learn', tabBarLabel: label('Learn'), tabBarIcon: icon('book') }} />
-      <Tabs.Screen name="history" options={{ title: 'History', tabBarLabel: label('History'), tabBarIcon: icon('time') }} />
+      <Tabs.Screen name="index" options={{ title: t.tabs.check, tabBarLabel: label(t.tabs.check), tabBarAccessibilityLabel: t.tabs.check, tabBarIcon: icon('shield-checkmark') }} />
+      <Tabs.Screen name="learn" options={{ title: t.tabs.learn, tabBarLabel: label(t.tabs.learn), tabBarAccessibilityLabel: t.tabs.learn, tabBarIcon: icon('book') }} />
+      <Tabs.Screen name="history" options={{ title: t.tabs.history, tabBarLabel: label(t.tabs.history), tabBarAccessibilityLabel: t.tabs.history, tabBarIcon: icon('time') }} />
     </Tabs>
   );
 }

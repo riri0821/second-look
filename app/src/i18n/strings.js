@@ -1,0 +1,286 @@
+// Every piece of text in the app, in English and Filipino.
+// Plain words for everyone. No em dashes. {name} marks a value filled in at runtime.
+
+export const STRINGS = {
+  en: {
+    languageName: 'English',
+    switchTo: 'Filipino',
+
+    tabs: { check: 'Check', learn: 'Learn', history: 'History' },
+
+    verdicts: {
+      danger: { label: 'Likely a scam', hint: "Don't click the link or reply." },
+      suspicious: { label: 'Be careful', hint: 'Some warning signs. Check with the sender another way.' },
+      no_red_flags: { label: 'No red flags', hint: 'Nothing suspicious found, but no check is perfect.' },
+    },
+
+    result: {
+      riskScore: 'Risk score',
+      why: 'Why',
+      whatWeChecked: 'What we checked',
+      note: 'Note',
+      linkPassed: 'The link passed every check.',
+      noLinks: 'No links found in this message. Be wary of anyone asking for money, codes or passwords.',
+      nextTitle: 'What to do now',
+      next: {
+        danger: [
+          'Do not tap the link or reply, not even to say stop.',
+          'Block the sender and delete the message.',
+          'If it mentions your bank or e-wallet, contact them using the number on your card or their official app.',
+          'If you already shared details or money, call your bank right away.',
+        ],
+        suspicious: [
+          'Do not tap the link yet.',
+          'Contact the company or person another way, using a number or app you already trust.',
+          'If anyone asks for money, a code or a password, stop.',
+        ],
+      },
+      reportPH: 'Report to CICC (call 1326)',
+    },
+
+    check: {
+      about: 'About',
+      title: 'Check a message',
+      intro: "Got a text, email or link that seems off? Copy it, paste it here, and we'll tell you if it looks like a scam.",
+      placeholder: 'Paste the message here',
+      inputLabel: 'Message to check',
+      paste: 'Paste',
+      clear: 'Clear',
+      checkIt: 'Check it',
+      checking: 'Checking...',
+      slow: 'Still checking. The first check of the day can take up to 30 seconds.',
+      error: "We couldn't check this right now. Make sure you're connected to the internet and try again.",
+      tryExample: 'Not sure how it works? Try an example',
+      example: 'USPS: Your package could not be delivered. Confirm your address within 24 hours or it will be returned: usps-redelivery-help.top/track',
+      checkAnother: 'Check another message',
+      recent: 'Recent',
+      seeAll: 'See all',
+    },
+
+    learn: {
+      title: 'Spot the scam',
+      intro: 'Short lessons on how scams work, so you can recognize one on your own.',
+      quizTitle: 'Can you spot a scam?',
+      quizSub: 'Take the 12-question quiz',
+      lessons: 'Lessons',
+      done: '{done} of {total} done',
+      minRead: '{n} min read',
+      completed: 'completed',
+    },
+
+    lesson: { stepOf: '{n} of {total}', back: 'Back', next: 'Next', finish: 'Finish lesson' },
+
+    quiz: {
+      title: 'Test your knowledge',
+      messageOf: 'Message {n} of {total}',
+      inARow: '{n} in a row',
+      question: 'Is this message real, or a scam?',
+      itsScam: "It's a scam",
+      itsReal: "It's real",
+      correct: 'Correct.',
+      notQuite: 'Not quite.',
+      answerScam: "It's a scam.",
+      answerReal: "It's real.",
+      nextMessage: 'Next message',
+      seeScore: 'See my score',
+      outOf: '{score} out of {total}',
+      great: 'Excellent. You know what to look for.',
+      practice: 'Good practice. The lessons cover the patterns you missed.',
+      bestStreak: 'Best streak: {n} in a row',
+      playAgain: 'Play again',
+      backToLessons: 'Back to lessons',
+    },
+
+    history: {
+      title: 'History',
+      privacy: 'Saved only on this phone. We never keep your messages.',
+      empty: 'Nothing here yet.',
+      emptySub: 'Messages you check will show up here so you can look at them again.',
+      checkAMessage: 'Check a message',
+      deleteOne: 'Delete this check?',
+      deleteOneBody: 'It will be removed from this phone.',
+      deleteAll: 'Delete all history',
+      deleteAllTitle: 'Delete all history?',
+      deleteAllBody: 'Every saved check will be removed from this phone.',
+      delete: 'Delete',
+      cancel: 'Cancel',
+      newer: 'Newer',
+      older: 'Older',
+      pageOf: 'Page {n} of {total}',
+      deleteLabel: 'Delete this check',
+    },
+
+    time: { justNow: 'Just now', minAgo: '{n} min ago', hrAgo: '{n} hr ago', yesterday: 'Yesterday' },
+
+    saved: { title: 'Saved check', checkedOn: 'Checked {date}', gone: 'This check was deleted.' },
+
+    onboarding: {
+      steps: [
+        { title: 'A second look before you click', body: 'Scam texts and emails are designed to look real. Second Look checks them for you and explains what it finds, in plain words.' },
+        { title: 'Copy, paste, check', body: 'Got a message that feels off? Copy it, paste it into the app, and tap Check it. You will see right away whether it looks safe.' },
+        { title: 'Your messages stay private', body: 'We check the message and then forget it. Nothing is stored on our side. Your history is saved only on this phone, and you can delete it anytime.' },
+      ],
+      chooseLanguage: 'Choose your language',
+      stepOf: '{n} of {total}',
+      back: 'Back',
+      next: 'Next',
+      start: 'Get started',
+    },
+
+    about: {
+      title: 'About and privacy',
+      sections: [
+        { title: 'What Second Look does', body: 'It checks messages and links for the warning signs scammers rely on: fake look-alike websites, hidden links, brand-new websites, and pressure tactics. Then it tells you what it found in plain words.' },
+        { title: 'What happens to your messages', body: 'When you tap Check it, the message is sent over a secure connection to our checker. It is checked and then forgotten. We do not save it or log it. Website addresses found in the message may be looked up with security services to see if they are known scams, but your message itself is never shared.' },
+        { title: 'What stays on your phone', body: 'Your history and lesson progress are saved only on this phone. Delete them anytime from the History tab. Deleting the app removes them too.' },
+        { title: 'No check is perfect', body: 'Second Look can miss new scams, and it can be cautious about real messages. If you are unsure, contact the company yourself using their official app or the number on your card.' },
+      ],
+      language: 'Language',
+      privacyPolicy: 'Read the full privacy policy',
+      reportPH: 'Report a scam in the Philippines (CICC hotline 1326)',
+      reportUS: 'Report a scam in the US (FTC)',
+      version: 'Version {v}',
+    },
+  },
+
+  fil: {
+    languageName: 'Filipino',
+    switchTo: 'English',
+
+    tabs: { check: 'Suriin', learn: 'Matuto', history: 'Kasaysayan' },
+
+    verdicts: {
+      danger: { label: 'Malamang scam', hint: 'Huwag i-click ang link at huwag sumagot.' },
+      suspicious: { label: 'Mag-ingat', hint: 'May ilang babala. Kumpirmahin muna sa nagpadala sa ibang paraan.' },
+      no_red_flags: { label: 'Walang nakitang babala', hint: 'Walang kahina-hinala, pero walang pagsusuring perpekto.' },
+    },
+
+    result: {
+      riskScore: 'Antas ng panganib',
+      why: 'Bakit',
+      whatWeChecked: 'Ang sinuri namin',
+      note: 'Paalala',
+      linkPassed: 'Pumasa ang link sa lahat ng pagsusuri.',
+      noLinks: 'Walang link sa mensaheng ito. Mag-ingat sa sinumang humihingi ng pera, code o password.',
+      nextTitle: 'Ano ang gagawin ngayon',
+      next: {
+        danger: [
+          'Huwag i-click ang link at huwag sumagot, kahit para lang sabihing tumigil sila.',
+          'I-block ang nagpadala at burahin ang mensahe.',
+          'Kung binanggit ang bangko o e-wallet mo, kontakin sila gamit ang numero sa card mo o ang opisyal nilang app.',
+          'Kung nakapagbigay ka na ng detalye o pera, tawagan agad ang bangko mo.',
+        ],
+        suspicious: [
+          'Huwag munang i-click ang link.',
+          'Kontakin ang kumpanya o tao sa ibang paraan, gamit ang numero o app na pinagkakatiwalaan mo.',
+          'Kung may humingi ng pera, code o password, huminto ka na.',
+        ],
+      },
+      reportPH: 'I-report sa CICC (tumawag sa 1326)',
+    },
+
+    check: {
+      about: 'Tungkol',
+      title: 'Suriin ang mensahe',
+      intro: 'May text, email o link na parang kakaiba? Kopyahin ito, i-paste dito, at sasabihin namin kung mukha itong scam.',
+      placeholder: 'I-paste dito ang mensahe',
+      inputLabel: 'Mensaheng susuriin',
+      paste: 'I-paste',
+      clear: 'Burahin',
+      checkIt: 'Suriin',
+      checking: 'Sinusuri...',
+      slow: 'Sinusuri pa. Ang unang pagsusuri sa araw ay puwedeng umabot ng 30 segundo.',
+      error: 'Hindi namin ito masuri ngayon. Siguraduhing may internet ka at subukan ulit.',
+      tryExample: 'Hindi sigurado kung paano? Subukan ang halimbawa',
+      example: 'LBC: Hindi ma-deliver ang package mo. I-confirm ang address mo sa loob ng 24 oras o ibabalik ito: lbc-redelivery-ph.top/track',
+      checkAnother: 'Suriin ang ibang mensahe',
+      recent: 'Kamakailan',
+      seeAll: 'Tingnan lahat',
+    },
+
+    learn: {
+      title: 'Kilalanin ang scam',
+      intro: 'Maiikling aralin kung paano gumagana ang mga scam, para makilala mo ito nang mag-isa.',
+      quizTitle: 'Kaya mo bang makilala ang scam?',
+      quizSub: 'Sagutin ang 12 tanong',
+      lessons: 'Mga aralin',
+      done: '{done} sa {total} tapos',
+      minRead: '{n} minutong basa',
+      completed: 'tapos na',
+    },
+
+    lesson: { stepOf: '{n} sa {total}', back: 'Bumalik', next: 'Susunod', finish: 'Tapusin ang aralin' },
+
+    quiz: {
+      title: 'Subukan ang kaalaman mo',
+      messageOf: 'Mensahe {n} sa {total}',
+      inARow: '{n} sunod-sunod',
+      question: 'Totoo ba ang mensaheng ito, o scam?',
+      itsScam: 'Scam ito',
+      itsReal: 'Totoo ito',
+      correct: 'Tama.',
+      notQuite: 'Mali.',
+      answerScam: 'Scam ito.',
+      answerReal: 'Totoo ito.',
+      nextMessage: 'Susunod na mensahe',
+      seeScore: 'Tingnan ang score ko',
+      outOf: '{score} sa {total}',
+      great: 'Magaling. Alam mo na ang dapat bantayan.',
+      practice: 'Magandang pagsasanay. Nasa mga aralin ang mga palatandaang hindi mo nakita.',
+      bestStreak: 'Pinakamahabang sunod-sunod: {n}',
+      playAgain: 'Maglaro ulit',
+      backToLessons: 'Bumalik sa mga aralin',
+    },
+
+    history: {
+      title: 'Kasaysayan',
+      privacy: 'Naka-save lang sa phone na ito. Hindi namin itinatago ang mga mensahe mo.',
+      empty: 'Wala pang laman.',
+      emptySub: 'Lalabas dito ang mga mensaheng sinuri mo para matingnan mo ulit.',
+      checkAMessage: 'Suriin ang mensahe',
+      deleteOne: 'Burahin ang pagsusuring ito?',
+      deleteOneBody: 'Mabubura ito sa phone na ito.',
+      deleteAll: 'Burahin lahat ng kasaysayan',
+      deleteAllTitle: 'Burahin lahat ng kasaysayan?',
+      deleteAllBody: 'Mabubura sa phone na ito ang lahat ng naka-save na pagsusuri.',
+      delete: 'Burahin',
+      cancel: 'Kanselahin',
+      newer: 'Mas bago',
+      older: 'Mas luma',
+      pageOf: 'Pahina {n} sa {total}',
+      deleteLabel: 'Burahin ang pagsusuring ito',
+    },
+
+    time: { justNow: 'Ngayon lang', minAgo: '{n} minuto ang nakalipas', hrAgo: '{n} oras ang nakalipas', yesterday: 'Kahapon' },
+
+    saved: { title: 'Naka-save na pagsusuri', checkedOn: 'Sinuri noong {date}', gone: 'Nabura na ang pagsusuring ito.' },
+
+    onboarding: {
+      steps: [
+        { title: 'Tingnan muna bago mag-click', body: 'Ginagawang mukhang totoo ang mga scam na text at email. Sinusuri ito ng Second Look para sa iyo at ipinapaliwanag sa simpleng salita.' },
+        { title: 'Kopyahin, i-paste, suriin', body: 'May mensaheng parang kakaiba? Kopyahin ito, i-paste sa app, at pindutin ang Suriin. Makikita mo agad kung mukha itong ligtas.' },
+        { title: 'Pribado ang mga mensahe mo', body: 'Sinusuri namin ang mensahe at kinakalimutan na pagkatapos. Walang naiimbak sa amin. Ang kasaysayan mo ay nasa phone mo lang, at puwede mo itong burahin kahit kailan.' },
+      ],
+      chooseLanguage: 'Piliin ang wika',
+      stepOf: '{n} sa {total}',
+      back: 'Bumalik',
+      next: 'Susunod',
+      start: 'Magsimula',
+    },
+
+    about: {
+      title: 'Tungkol at privacy',
+      sections: [
+        { title: 'Ano ang ginagawa ng Second Look', body: 'Sinusuri nito ang mga mensahe at link para sa mga babalang ginagamit ng scammer: pekeng kamukhang website, nakatagong link, bagong-bagong website, at pagmamadali. Pagkatapos, ipinapaliwanag nito ang nakita sa simpleng salita.' },
+        { title: 'Ano ang nangyayari sa mga mensahe mo', body: 'Kapag pinindot mo ang Suriin, ipinapadala ang mensahe sa aming checker sa isang secure na koneksyon. Sinusuri ito at kinakalimutan pagkatapos. Hindi namin ito sine-save o nire-record. Maaaring tingnan sa mga security service ang mga website address sa mensahe para malaman kung kilalang scam ang mga ito, pero hindi kailanman ibinabahagi ang mismong mensahe mo.' },
+        { title: 'Ang naiiwan sa phone mo', body: 'Ang kasaysayan at progreso mo sa mga aralin ay naka-save lang sa phone na ito. Burahin ito kahit kailan sa Kasaysayan. Mabubura rin ito kapag binura mo ang app.' },
+        { title: 'Walang pagsusuring perpekto', body: 'Puwedeng hindi makita ng Second Look ang mga bagong scam, at puwede rin itong maging maingat sa totoong mensahe. Kung hindi sigurado, kontakin mismo ang kumpanya gamit ang opisyal nilang app o ang numero sa card mo.' },
+      ],
+      language: 'Wika',
+      privacyPolicy: 'Basahin ang buong privacy policy (Ingles)',
+      reportPH: 'Mag-report ng scam sa Pilipinas (CICC hotline 1326)',
+      reportUS: 'Mag-report ng scam sa US (FTC)',
+      version: 'Bersyon {v}',
+    },
+  },
+};

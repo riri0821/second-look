@@ -4,56 +4,48 @@ import Constants from 'expo-constants';
 import { C, type, T } from '../components/theme';
 import { PRIVACY_URL } from '../lib/api';
 import PageMeta from '../components/PageMeta';
-
-const SECTIONS = [
-  {
-    title: 'What Second Look does',
-    body: 'It checks messages and links for the warning signs scammers rely on: fake look-alike websites, hidden links, brand-new websites, and pressure tactics. Then it tells you what it found in plain words.',
-  },
-  {
-    title: 'What happens to your messages',
-    body: 'When you tap Check it, the message is sent over a secure connection to our checker. It is checked and then forgotten. We do not save it or log it. Website addresses found in the message may be looked up with security services to see if they are known scams, but your message itself is never shared.',
-  },
-  {
-    title: 'What stays on your phone',
-    body: 'Your history and lesson progress are saved only on this phone. Delete them anytime from the History tab. Deleting the app removes them too.',
-  },
-  {
-    title: 'No check is perfect',
-    body: 'Second Look can miss new scams, and it can be cautious about real messages. If you are unsure, contact the company yourself using their official app or the number on your card.',
-  },
-];
+import LanguagePicker from '../components/LanguagePicker';
+import { fill, useLanguage } from '../i18n';
 
 export default function About() {
+  const { t } = useLanguage();
+  const a = t.about;
+  const links = [
+    { icon: 'document-text-outline', label: a.privacyPolicy, url: PRIVACY_URL },
+    { icon: 'flag-outline', label: a.reportPH, url: 'https://cicc.gov.ph' },
+    { icon: 'flag-outline', label: a.reportUS, url: 'https://reportfraud.ftc.gov' },
+  ];
+
   return (
     <ScrollView style={{ backgroundColor: C.bg }} contentContainerStyle={styles.container}>
       <PageMeta title="About and privacy" description={'What Second Look does, how your messages are handled, and why nothing you check is ever stored on our servers.'} />
-      {SECTIONS.map(s => (
+
+      <View style={styles.section}>
+        <Text style={styles.heading} accessibilityRole="header">{a.language}</Text>
+        <View style={{ marginTop: 10 }}><LanguagePicker /></View>
+      </View>
+
+      {a.sections.map(s => (
         <View key={s.title} style={styles.section}>
-          <Text style={type.h2}>{s.title}</Text>
+          <Text style={styles.heading} accessibilityRole="header">{s.title}</Text>
           <Text style={[type.body, { marginTop: 8, color: C.muted }]}>{s.body}</Text>
         </View>
       ))}
 
-      <Pressable style={styles.link} onPress={() => Linking.openURL(PRIVACY_URL)}>
-        <Ionicons name="document-text-outline" size={20} color={C.text} />
-        <Text style={styles.linkText}>Read the full privacy policy</Text>
-        <Ionicons name="open-outline" size={18} color={C.muted} />
-      </Pressable>
+      {links.map((l, i) => (
+        <Pressable
+          key={l.url}
+          style={({ pressed }) => [styles.link, i > 0 && { borderTopWidth: 0 }, pressed && { opacity: 0.7 }]}
+          onPress={() => Linking.openURL(l.url)}
+          accessibilityRole="link"
+        >
+          <Ionicons name={l.icon} size={20} color={C.text} />
+          <Text style={styles.linkText}>{l.label}</Text>
+          <Ionicons name="open-outline" size={18} color={C.muted} />
+        </Pressable>
+      ))}
 
-      <Pressable style={[styles.link, { borderTopWidth: 0 }]} onPress={() => Linking.openURL('https://reportfraud.ftc.gov')}>
-        <Ionicons name="flag-outline" size={20} color={C.text} />
-        <Text style={styles.linkText}>Report a scam in the US (FTC)</Text>
-        <Ionicons name="open-outline" size={18} color={C.muted} />
-      </Pressable>
-
-      <Pressable style={[styles.link, { borderTopWidth: 0 }]} onPress={() => Linking.openURL('https://cicc.gov.ph')}>
-        <Ionicons name="flag-outline" size={20} color={C.text} />
-        <Text style={styles.linkText}>Report a scam in the Philippines (CICC hotline 1326)</Text>
-        <Ionicons name="open-outline" size={18} color={C.muted} />
-      </Pressable>
-
-      <Text style={styles.version}>Version {Constants.expoConfig?.version ?? '1.0.0'}</Text>
+      <Text style={styles.version}>{fill(a.version, { v: Constants.expoConfig?.version ?? '1.0.0' })}</Text>
     </ScrollView>
   );
 }
@@ -61,6 +53,7 @@ export default function About() {
 const styles = StyleSheet.create({
   container: { padding: 24, paddingBottom: 48 },
   section: { marginBottom: 28 },
+  heading: { fontSize: T.M, fontWeight: '800', color: C.text },
   link: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 16, borderTopWidth: 1, borderBottomWidth: 1, borderColor: C.border },
   linkText: { flex: 1, fontSize: T.M, fontWeight: '600', color: C.text },
   version: { fontSize: T.S, color: C.faint, textAlign: 'center', marginTop: 28 },

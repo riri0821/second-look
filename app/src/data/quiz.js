@@ -1,3 +1,5 @@
+import { QUIZ_FIL } from './quiz.fil';
+
 // "Real or scam?" quiz. All names, numbers and links are made up for teaching.
 // `parts` uses the same format as lessons; flags are only shown after answering.
 
@@ -75,3 +77,5 @@ export const QUIZ = [
     why: 'Microsoft never texts or pops up asking you to call. Whoever answers will try to get into your computer.',
   },
 ];
+
+export const quizFor = lang => (lang === 'fil' ? QUIZ_FIL : QUIZ);

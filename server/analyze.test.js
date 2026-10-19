@@ -76,3 +76,8 @@ test('a family emergency money request is never shown as safe', async () => {
   const r = await analyze('Ma, bagong number ko to. Nawala ang phone ko, padala ka pera sa gcash ko please', offline);
   assert.notEqual(r.verdict, 'no_red_flags');
 });
+
+test('explains reasons in Filipino when asked', async () => {
+  const r = await analyze('Ibigay mo ang OTP para ma-verify', offline, 'fil');
+  assert.match(reasons(r.messageFlags), /OTP mo/);
+});

@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { readFileSync } from 'node:fs';
 import { analyze } from './analyze.js';
+import { SUPPORTED_LANGS } from './messages.js';
 
 const PORT = process.env.PORT || 3123;
 const CONTACT_EMAIL = process.env.CONTACT_EMAIL || '';
@@ -20,9 +21,9 @@ async function handleAnalyze(req, res) {
     if (body.length > 20000) return json(res, 413, { error: 'Message is too long' });
   }
   try {
-    const { text } = JSON.parse(body);
+    const { text, lang } = JSON.parse(body);
     if (typeof text !== 'string' || !text.trim()) throw new Error('missing text');
-    json(res, 200, await analyze(text));
+    json(res, 200, await analyze(text, process.env, SUPPORTED_LANGS.includes(lang) ? lang : 'en'));
   } catch (e) {
     json(res, 400, { error: e.message });
   }

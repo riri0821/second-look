@@ -1,3 +1,5 @@
+import { LESSONS_FIL } from './lessons.fil';
+
 // Lesson content. Each lesson is a short series of cards.
 // Card kinds:
 //   { kind: 'text', title, body }
@@ -263,4 +265,5 @@ export const LESSONS = [
   },
 ];
 
-export const getLesson = id => LESSONS.find(l => l.id === id);
+export const lessonsFor = lang => (lang === 'fil' ? LESSONS_FIL : LESSONS);
+export const getLesson = (id, lang) => lessonsFor(lang).find(l => l.id === id);

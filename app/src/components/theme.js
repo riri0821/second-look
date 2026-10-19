@@ -11,10 +11,11 @@ export const C = {
   faint: '#A3A3A3',
 };
 
+// Verdict colors and icons. Their words live in src/i18n/strings.js.
 export const VERDICTS = {
-  danger: { label: 'Likely a scam', hint: "Don't click the link or reply.", color: '#DC2626', tint: '#FEF2F2', icon: 'alert' },
-  suspicious: { label: 'Be careful', hint: 'Some warning signs. Check with the sender another way.', color: '#D97706', tint: '#FFFBEB', icon: 'help' },
-  no_red_flags: { label: 'No red flags', hint: 'Nothing suspicious found, but no check is perfect.', color: '#16A34A', tint: '#F0FDF4', icon: 'checkmark' },
+  danger: { color: '#DC2626', tint: '#FEF2F2', icon: 'alert' },
+  suspicious: { color: '#D97706', tint: '#FFFBEB', icon: 'help' },
+  no_red_flags: { color: '#16A34A', tint: '#F0FDF4', icon: 'checkmark' },
 };
 
 // Highlight styles for red flags inside example messages.

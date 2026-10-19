@@ -2,6 +2,7 @@
 import dns from 'node:dns/promises';
 import net from 'node:net';
 import { BRAND_LIST, COMMON_WORDS, GENERIC_IN_HOSTS } from './brands.js';
+import { say } from './messages.js';
 
 const SHORTENERS = new Set([
   'bit.ly', 'tinyurl.com', 't.co', 'goo.gl', 'is.gd', 'ow.ly', 'cutt.ly',
@@ -43,57 +44,57 @@ const TACTICS = [
   {
     points: 30,
     re: /\b(anydesk|teamviewer|rustdesk|quick ?support|remote access|screen ?share)\b/i,
-    reason: 'It asks you to install an app or allow remote access. Scammers use this to control your phone or computer.',
+    key: 'remote',
   },
   {
     points: 30,
     re: /\b(send|share|give|tell|reply with|read|forward|ibigay|i-?send|ipadala|sabihin)\b.{0,30}\b(otp|code|pin|verification)\b|\b(otp|code|pin)\b.{0,25}\b(send|share|reply|ibigay|i-?send|ipadala)\b/i,
-    reason: 'It asks you to share a security code. That code unlocks your account, and no real company will ever ask for it.',
+    key: 'code',
   },
   {
     points: 30,
     re: /\b(gift ?cards?|google play cards?|itunes cards?|apple cards?|steam cards?|load cards?|e-?load|pa-?load)\b/i,
-    reason: 'It asks for payment with gift cards or phone load. No real company or government office accepts this.',
+    key: 'giftCards',
   },
   {
     points: 25,
     re: /\b(card number|cvv|cvc|social security number|ssn|bank details|account number|password|mpin|pin code|full name and address)\b/i,
-    reason: 'It asks for private details like card numbers or passwords. Real companies never ask for these by message.',
+    key: 'private',
   },
   {
     points: 20,
     re: /\b(bitcoin|btc|usdt|crypto ?wallet|wire transfer|western union|moneygram)\b/i,
-    reason: 'It asks for money in a way that cannot be reversed, like crypto or a wire transfer. Scammers prefer these.',
+    key: 'irreversible',
   },
   {
     points: 25,
     re: /\b(arrest|warrant|lawsuit|legal action|police|deport|kakasuhan|ipapahuli|makukulong|kaso)\b/i,
-    reason: 'It threatens arrest or legal trouble. Government offices do not threaten people by text.',
+    key: 'threat',
   },
   {
     points: 20,
     re: /\b(you (have )?won|winner|congratulations|claim your (prize|reward|gift)|lottery|raffle|nanalo ka|napili ka|premyo|pa-?premyo|i-?claim)\b/i,
-    reason: 'It says you won something you never entered. Prize messages are one of the most common scams.',
+    key: 'prize',
   },
   {
     points: 35,
     re: /\b(new number|lost my phone|dropped my phone|bagong number|nawala ang (phone|cellphone)|naaksidente|na-?ospital|emergency)\b.{0,80}\b(send|need|money|pera|padala|gcash|pautang|hiram)\b/i,
-    reason: 'It claims to be someone you know in trouble asking for money. Call them on their usual number first.',
+    key: 'family',
   },
   {
     points: 15,
     re: /\b(work from home|part[- ]?time|sideline|easy money|kumita ng|daily income|per day|kada araw|like (and|&) earn|commission)\b/i,
-    reason: 'It offers easy money or a job you did not apply for. These usually end with you paying "fees".',
+    key: 'job',
   },
   {
     points: 15,
     re: /\b(loan approved|pre-?approved loan|instant loan|na-?approve ang (loan|utang)|pautang|cash loan)\b/i,
-    reason: 'It offers a loan you did not apply for. Fake lenders ask for "processing fees" and personal details.',
+    key: 'loan',
   },
   {
     points: 15,
     re: /\b(call|contact|tawagan|i-?text)\b.{0,40}(\+?\d[\d\s().-]{8,}\d)/i,
-    reason: 'It asks you to call or text a number in the message. Use the number on the company\'s official website instead.',
+    key: 'call',
   },
 ];
 
@@ -163,27 +164,27 @@ function impersonatedBrand(host) {
 }
 
 // Checks that only look at the link itself; no network needed.
-export function staticChecks(url) {
+export function staticChecks(url, lang = 'en') {
   const u = new URL(url);
   const host = u.hostname.toLowerCase();
   const flags = [];
-  const add = (points, reason) => flags.push({ points, reason });
+  const add = (points, key, details) => flags.push({ points, code: key, reason: say(lang, key, details) });
   const ending = host.split('.').pop();
 
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) add(30, 'The link uses a string of numbers instead of a website name. Real companies do not do this.');
-  if (host.includes('xn--')) add(30, 'The website name uses letters from other alphabets that look like normal letters, to copy a real name.');
-  if (u.username || url.includes('@')) add(25, 'The link contains an @ sign, a trick that hides where it really goes.');
-  if (u.protocol === 'http:') add(5, 'The website does not use a secure connection.');
-  if (RISKY_TLDS.has(ending)) add(15, `The website address ends in ".${ending}", an ending scammers use often.`);
-  if (host.split('.').length > 4) add(10, 'The website address is unusually long, a common way to look official.');
-  if ((host.match(/-/g) || []).length >= 3) add(10, 'The website name is split up with many dashes, a common scam pattern.');
-  if (SHORTENERS.has(host)) add(10, 'This is a shortened link, which hides where it really goes.');
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) add(30, 'ip');
+  if (host.includes('xn--')) add(30, 'punycode');
+  if (u.username || url.includes('@')) add(25, 'at');
+  if (u.protocol === 'http:') add(5, 'http');
+  if (RISKY_TLDS.has(ending)) add(15, 'ending', { ending });
+  if (host.split('.').length > 4) add(10, 'long');
+  if ((host.match(/-/g) || []).length >= 3) add(10, 'dashes');
+  if (SHORTENERS.has(host)) add(10, 'shortener');
 
   if (isAnyBrandSite(host)) return flags;
   const base = registrableDomain(host);
   const match = impersonatedBrand(host);
-  if (match?.lookalike) add(40, `"${base}" is made to look like ${match.brand.name}, but it is not their website.`);
-  else if (match) add(30, `It uses the name ${match.brand.name}, but the real website is "${base}", which does not belong to them.`);
+  if (match?.lookalike) add(40, 'lookalike', { base, brand: match.brand.name });
+  else if (match) add(30, 'usesName', { base, brand: match.brand.name });
   return flags;
 }
 
@@ -275,43 +276,43 @@ async function virusTotal(url, key) {
   return stats ? stats.malicious + stats.suspicious : null;
 }
 
-async function checkUrl(url, env) {
+async function checkUrl(url, env, lang) {
   const flags = [];
-  const add = (points, reason) => flags.push({ points, reason });
+  const add = (points, key, details) => flags.push({ points, code: key, reason: say(lang, key, details) });
 
   const { target, via } = unwrapLink(url);
   if (via.length) {
     const first = via[0];
-    add(first.known ? 20 : 10, first.known
-      ? `The link is disguised. It starts at ${first.host}, a trusted website, but forwards you to ${new URL(target).hostname}.`
-      : `The link has another website address hidden inside it: ${new URL(target).hostname}.`);
+    const hidden = new URL(target).hostname;
+    if (first.known) add(20, 'disguised', { via: first.host, target: hidden });
+    else add(10, 'hidden', { target: hidden });
   }
 
   let finalUrl = target;
   try { finalUrl = await resolveRedirects(target); } catch { /* unreachable is fine */ }
-  if (finalUrl !== target) add(0, `The link really leads to ${new URL(finalUrl).hostname}.`);
+  if (finalUrl !== target) add(0, 'leadsTo', { host: new URL(finalUrl).hostname });
 
   // Tricks like "@" live in the original link; everything else is judged on where it really goes.
-  if (url !== target) flags.push(...staticChecks(url).filter(f => f.reason.includes('@')));
-  flags.push(...staticChecks(target));
-  if (finalUrl !== target) flags.push(...staticChecks(finalUrl).filter(f => !SHORTENERS.has(new URL(finalUrl).hostname)));
+  if (url !== target) flags.push(...staticChecks(url, lang).filter(f => f.code === 'at'));
+  flags.push(...staticChecks(target, lang));
+  if (finalUrl !== target) flags.push(...staticChecks(finalUrl, lang).filter(f => !SHORTENERS.has(new URL(finalUrl).hostname)));
 
   const host = new URL(finalUrl).hostname;
   if (!isAnyBrandSite(host)) {
     try {
       const age = await domainAgeDays(host);
-      if (age !== null && age < 30) add(35, `The website was created only ${age === 1 ? '1 day' : `${age} days`} ago. Scam websites are usually brand new.`);
-      else if (age !== null && age < 180) add(15, `The website is only ${age} days old.`);
+      if (age !== null && age < 30) add(35, 'brandNew', { age });
+      else if (age !== null && age < 180) add(15, 'young', { age });
     } catch { /* not every website has public registration info */ }
   }
 
   if (env.GOOGLE_SAFE_BROWSING_KEY) {
-    try { if (await safeBrowsing(finalUrl, env.GOOGLE_SAFE_BROWSING_KEY)) add(80, 'Google lists this website as dangerous.'); } catch {}
+    try { if (await safeBrowsing(finalUrl, env.GOOGLE_SAFE_BROWSING_KEY)) add(80, 'google'); } catch {}
   }
   if (env.VIRUSTOTAL_KEY) {
     try {
       const hits = await virusTotal(finalUrl, env.VIRUSTOTAL_KEY);
-      if (hits) add(Math.min(80, 20 * hits), `${hits === 1 ? 'A security company has' : `${hits} security companies have`} flagged this website as harmful.`);
+      if (hits) add(Math.min(80, 20 * hits), 'vendors', { hits });
     } catch {}
   }
   return { url, finalUrl, flags };
@@ -335,27 +336,27 @@ export function brandInText(text) {
   return null;
 }
 
-export function textChecks(text) {
+export function textChecks(text, lang = 'en') {
   const lower = text.toLowerCase();
   const flags = [];
   const pressure = PRESSURE_WORDS.filter(w => lower.includes(w));
   if (pressure.length) {
-    flags.push({ points: Math.min(25, pressure.length * 8), reason: `It uses pressure words like "${pressure.slice(0, 2).join('" and "')}" to rush you.` });
+    flags.push({ points: Math.min(25, pressure.length * 8), code: 'pressure', reason: say(lang, 'pressure', { words: pressure.slice(0, 2) }) });
   }
-  for (const t of TACTICS) if (t.re.test(text)) flags.push({ points: t.points, reason: t.reason });
+  for (const t of TACTICS) if (t.re.test(text)) flags.push({ points: t.points, code: t.key, reason: say(lang, t.key) });
   return flags;
 }
 
-export async function analyze(text, env = process.env) {
+export async function analyze(text, env = process.env, lang = 'en') {
   const urls = extractUrls(text);
-  const links = await Promise.all(urls.map(u => checkUrl(u, env)));
-  const messageFlags = textChecks(text);
+  const links = await Promise.all(urls.map(u => checkUrl(u, env, lang)));
+  const messageFlags = textChecks(text, lang);
 
   // A message that names a brand but links somewhere else is a classic scam.
   const brand = brandInText(text);
   const offsite = brand && links.find(l => !isBrandSite(new URL(l.finalUrl).hostname, brand));
   if (offsite) {
-    messageFlags.push({ points: 25, reason: `The message claims to be from ${brand.name}, but the link goes to ${new URL(offsite.finalUrl).hostname}.` });
+    messageFlags.push({ points: 25, code: 'claims', reason: say(lang, 'claims', { brand: brand.name, host: new URL(offsite.finalUrl).hostname }) });
   }
 
   const all = [...messageFlags, ...links.flatMap(l => l.flags)];
