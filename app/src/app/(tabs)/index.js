@@ -12,6 +12,10 @@ import { addHistory, getHistory } from '../../lib/storage';
 import { timeAgo } from '../../lib/time';
 import PageMeta from '../../components/PageMeta';
 
+// The message box starts at about 3 lines and grows with the text, up to a limit.
+const INPUT_MIN = 110;
+const INPUT_MAX = 280;
+
 const EXAMPLE = 'USPS: Your package could not be delivered. Confirm your address within 24 hours or it will be returned: usps-redelivery-help.top/track';
 
 export default function CheckScreen() {
@@ -21,6 +25,7 @@ export default function CheckScreen() {
   const [slow, setSlow] = useState(false);
   const [error, setError] = useState('');
   const [recent, setRecent] = useState([]);
+  const [inputHeight, setInputHeight] = useState(INPUT_MIN);
   const scrollRef = useRef(null);
 
   useFocusEffect(useCallback(() => { getHistory().then(h => setRecent(h.slice(0, 3))); }, []));
@@ -39,6 +44,7 @@ export default function CheckScreen() {
 
   function startOver() {
     setText('');
+    setInputHeight(INPUT_MIN);
     setResult(null);
     setError('');
     scrollRef.current?.scrollTo({ y: 0, animated: true });
@@ -84,7 +90,9 @@ export default function CheckScreen() {
           </Text>
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, { height: inputHeight }]}
+            onContentSizeChange={e => setInputHeight(Math.min(INPUT_MAX, Math.max(INPUT_MIN, e.nativeEvent.contentSize.height + 2)))}
+            scrollEnabled={inputHeight >= INPUT_MAX}
             multiline
             placeholder="Paste the message here"
             placeholderTextColor={C.faint}
@@ -168,7 +176,7 @@ const styles = StyleSheet.create({
   aboutText: { fontSize: T.M, fontWeight: '600', color: C.text },
   intro: { marginTop: 8, marginBottom: 22 },
   input: {
-    minHeight: 150, backgroundColor: C.surface, borderRadius: 16, borderWidth: 1, borderColor: C.border,
+    backgroundColor: C.surface, borderRadius: 16, borderWidth: 1, borderColor: C.border,
     padding: 16, fontSize: T.M, lineHeight: 26, color: C.text, textAlignVertical: 'top',
   },
   row: { flexDirection: 'row', gap: 12, marginTop: 14 },

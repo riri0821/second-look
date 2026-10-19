@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
@@ -21,15 +21,27 @@ function confirm(title, message, onYes) {
   ]);
 }
 
+const PAGE_SIZE = 10;
+
 export default function HistoryScreen() {
   const [items, setItems] = useState(null);
+  const [page, setPage] = useState(0);
+  const scrollRef = useRef(null);
   const load = useCallback(() => { getHistory().then(setItems); }, []);
   useFocusEffect(load);
+
+  const pages = items ? Math.max(1, Math.ceil(items.length / PAGE_SIZE)) : 1;
+  const current = Math.min(page, pages - 1); // stay valid after deleting the last item on a page
+  const shown = items ? items.slice(current * PAGE_SIZE, (current + 1) * PAGE_SIZE) : [];
+  function goTo(p) {
+    setPage(p);
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <PageMeta title="History" description={'Your past message checks, saved only on this phone. Look at a result again or delete it anytime.'} />
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.container}>
         <Text style={type.h1}>History</Text>
         <View style={styles.privacy}>
           <Ionicons name="lock-closed" size={16} color={C.muted} />
@@ -49,7 +61,7 @@ export default function HistoryScreen() {
           </View>
         ) : (
           <>
-            {items.map(e => {
+            {shown.map(e => {
               const v = VERDICTS[e.result.verdict];
               return (
                 <View key={e.id} style={styles.row}>
@@ -76,9 +88,34 @@ export default function HistoryScreen() {
                 </View>
               );
             })}
+
+            {pages > 1 && (
+              <View style={styles.pager}>
+                <Pressable
+                  style={({ pressed }) => [button.secondary, styles.pageBtn, current === 0 && styles.disabled, pressed && styles.pressed]}
+                  disabled={current === 0}
+                  onPress={() => goTo(current - 1)}
+                  accessibilityLabel="Previous page"
+                >
+                  <Ionicons name="chevron-back" size={20} color={C.text} />
+                  <Text style={button.secondaryText}>Newer</Text>
+                </Pressable>
+                <Text style={styles.pageText}>Page {current + 1} of {pages}</Text>
+                <Pressable
+                  style={({ pressed }) => [button.secondary, styles.pageBtn, current === pages - 1 && styles.disabled, pressed && styles.pressed]}
+                  disabled={current === pages - 1}
+                  onPress={() => goTo(current + 1)}
+                  accessibilityLabel="Next page"
+                >
+                  <Text style={button.secondaryText}>Older</Text>
+                  <Ionicons name="chevron-forward" size={20} color={C.text} />
+                </Pressable>
+              </View>
+            )}
+
             <Pressable
               style={({ pressed }) => [button.secondary, { marginTop: 28 }, pressed && styles.pressed]}
-              onPress={() => confirm('Delete all history?', 'Every saved check will be removed from this phone.', async () => { await clearHistory(); load(); })}
+              onPress={() => confirm('Delete all history?', 'Every saved check will be removed from this phone.', async () => { await clearHistory(); setPage(0); load(); })}
             >
               <Text style={button.secondaryText}>Delete all history</Text>
             </Pressable>
@@ -93,6 +130,10 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   container: { padding: 24, paddingTop: 52, paddingBottom: 40 },
   pressed: { opacity: 0.7 },
+  disabled: { opacity: 0.25 },
+  pager: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 20 },
+  pageBtn: { flexDirection: 'row', gap: 4, paddingHorizontal: 14 },
+  pageText: { fontSize: T.S, color: C.muted, textAlign: 'center', flexShrink: 1 },
   privacy: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, marginBottom: 8 },
   privacyText: { fontSize: T.S, color: C.muted, flex: 1 },
   empty: { alignItems: 'center', marginTop: 56 },
