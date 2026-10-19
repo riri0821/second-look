@@ -50,6 +50,13 @@ function distance(a, b) {
   return dp[a.length][b.length];
 }
 
+// How brand names are written for people, e.g. paypal -> PayPal.
+const BRAND_NAMES = {
+  paypal: 'PayPal', usps: 'USPS', ups: 'UPS', dhl: 'DHL', fedex: 'FedEx', icloud: 'iCloud',
+  whatsapp: 'WhatsApp', wellsfargo: 'Wells Fargo', bankofamerica: 'Bank of America',
+};
+const brandName = b => BRAND_NAMES[b] ?? b[0].toUpperCase() + b.slice(1);
+
 function registrableDomain(host) {
   const parts = host.split('.');
   return parts.slice(-2).join('.');
@@ -62,22 +69,22 @@ export function staticChecks(url) {
   const flags = [];
   const add = (points, reason) => flags.push({ points, reason });
 
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) add(30, 'The link points to a raw IP address instead of a website name.');
-  if (host.includes('xn--')) add(30, 'The website name uses special characters that can imitate real letters (punycode).');
-  if (u.username || url.includes('@')) add(25, 'The link contains "@", which can hide where it really goes.');
-  if (u.protocol === 'http:') add(5, 'The link does not use a secure (https) connection.');
-  if (RISKY_TLDS.has(host.split('.').pop())) add(15, `The ".${host.split('.').pop()}" ending is commonly used by scam sites.`);
-  if (host.split('.').length > 4) add(10, 'The website name has an unusually long chain of subdomains.');
-  if ((host.match(/-/g) || []).length >= 3) add(10, 'The website name has many hyphens, a common scam pattern.');
-  if (SHORTENERS.has(host)) add(10, 'This is a link shortener, which hides the real destination.');
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) add(30, 'The link uses a string of numbers instead of a website name. Real companies do not do this.');
+  if (host.includes('xn--')) add(30, 'The website name uses letters from other alphabets that look like normal letters, to copy a real name.');
+  if (u.username || url.includes('@')) add(25, 'The link contains an @ sign, a trick that hides where it really goes.');
+  if (u.protocol === 'http:') add(5, 'The website does not use a secure connection.');
+  if (RISKY_TLDS.has(host.split('.').pop())) add(15, `The website address ends in ".${host.split('.').pop()}", an ending scammers use often.`);
+  if (host.split('.').length > 4) add(10, 'The website address is unusually long, a common way to look official.');
+  if ((host.match(/-/g) || []).length >= 3) add(10, 'The website name is split up with many dashes, a common scam pattern.');
+  if (SHORTENERS.has(host)) add(10, 'This is a shortened link, which hides where it really goes.');
 
   const base = registrableDomain(host);
   if (OFFICIAL_DOMAINS.has(base)) return flags;
   const label = base.split('.')[0];
   if (BRANDS.includes(label)) return flags;
   const brand = impersonatedBrand(host);
-  if (brand?.lookalike) add(40, `"${base}" looks like an imitation of ${brand.name}.`);
-  else if (brand) add(30, `Mentions "${brand.name}" but the real website is "${base}", not ${brand.name}.`);
+  if (brand?.lookalike) add(40, `"${base}" is made to look like ${brandName(brand.name)}, but it is not their website.`);
+  else if (brand) add(30, `It uses the name ${brandName(brand.name)}, but the real website is "${base}", which does not belong to them.`);
   return flags;
 }
 
@@ -173,7 +180,7 @@ async function checkUrl(url, env) {
   let finalUrl = url;
 
   try { finalUrl = await resolveRedirects(url); } catch { /* unreachable is fine */ }
-  if (finalUrl !== url) add(0, `The link actually leads to ${new URL(finalUrl).hostname}.`);
+  if (finalUrl !== url) add(0, `The link really leads to ${new URL(finalUrl).hostname}.`);
 
   flags.push(...staticChecks(url));
   if (finalUrl !== url) flags.push(...staticChecks(finalUrl).filter(f => !SHORTENERS.has(new URL(finalUrl).hostname)));
@@ -181,17 +188,17 @@ async function checkUrl(url, env) {
   const host = new URL(finalUrl).hostname;
   try {
     const age = await domainAgeDays(host);
-    if (age !== null && age < 30) add(35, `The website was created only ${age} day(s) ago.`);
-    else if (age !== null && age < 180) add(15, `The website is fairly new (${age} days old).`);
+    if (age !== null && age < 30) add(35, `The website was created only ${age === 1 ? '1 day' : `${age} days`} ago. Scam websites are usually brand new.`);
+    else if (age !== null && age < 180) add(15, `The website is only ${age} days old.`);
   } catch { /* RDAP not available for every domain */ }
 
   if (env.GOOGLE_SAFE_BROWSING_KEY) {
-    try { if (await safeBrowsing(finalUrl, env.GOOGLE_SAFE_BROWSING_KEY)) add(80, 'Google Safe Browsing lists this site as dangerous.'); } catch {}
+    try { if (await safeBrowsing(finalUrl, env.GOOGLE_SAFE_BROWSING_KEY)) add(80, 'Google lists this website as dangerous.'); } catch {}
   }
   if (env.VIRUSTOTAL_KEY) {
     try {
       const hits = await virusTotal(finalUrl, env.VIRUSTOTAL_KEY);
-      if (hits) add(Math.min(80, 20 * hits), `${hits} security vendor(s) on VirusTotal flag this site.`);
+      if (hits) add(Math.min(80, 20 * hits), `${hits === 1 ? 'A security company has' : `${hits} security companies have`} flagged this website as harmful.`);
     } catch {}
   }
   return { url, finalUrl, flags };
@@ -200,7 +207,7 @@ async function checkUrl(url, env) {
 function textChecks(text) {
   const lower = text.toLowerCase();
   const hits = URGENT_WORDS.filter(w => lower.includes(w));
-  return hits.length ? [{ points: Math.min(25, hits.length * 8), reason: `Uses pressure language: "${hits.slice(0, 3).join('", "')}".` }] : [];
+  return hits.length ? [{ points: Math.min(25, hits.length * 8), reason: `It uses pressure words like "${hits.slice(0, 2).join('" and "')}" to rush you.` }] : [];
 }
 
 export async function analyze(text, env = process.env) {
@@ -215,7 +222,7 @@ export async function analyze(text, env = process.env) {
     return !base.startsWith(named + '.') && !OFFICIAL_DOMAINS.has(base);
   });
   if (named && offsite) {
-    messageFlags.push({ points: 25, reason: `The message talks about ${named}, but the link goes to ${new URL(offsite.finalUrl).hostname}.` });
+    messageFlags.push({ points: 25, reason: `The message claims to be from ${brandName(named)}, but the link goes to ${new URL(offsite.finalUrl).hostname}.` });
   }
   const all = [...messageFlags, ...links.flatMap(l => l.flags)];
   const score = Math.min(100, all.reduce((s, f) => s + f.points, 0));

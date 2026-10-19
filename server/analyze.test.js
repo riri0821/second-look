@@ -8,9 +8,9 @@ test('extracts links from a scam text', () => {
 });
 
 test('flags lookalike domains', () => {
-  assert.ok(staticChecks('https://paypa1.com/login').some(f => f.reason.includes('imitation of paypal')));
+  assert.ok(staticChecks('https://paypa1.com/login').some(f => f.reason.includes('made to look like PayPal')));
   assert.ok(staticChecks('https://secure-apple.id-verify.xyz/').length >= 2);
-  assert.ok(staticChecks('http://paypa1-secure-login.xyz/verify').some(f => f.reason.includes('imitation of paypal')));
+  assert.ok(staticChecks('http://paypa1-secure-login.xyz/verify').some(f => f.reason.includes('made to look like PayPal')));
 });
 
 test('never fetches internal addresses', async () => {
