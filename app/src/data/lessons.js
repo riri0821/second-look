@@ -33,7 +33,7 @@ export const LESSONS = [
           { text: 'secure-bank-login.co/verify', flag: 'warn' },
           ' within 2 hours.',
         ],
-        caption: 'Every highlighted part is a warning sign. Swipe to see what each one means.',
+        caption: 'Every highlighted part is a warning sign. Tap Next to see what each one means.',
       },
       {
         kind: 'text',
