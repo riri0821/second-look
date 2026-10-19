@@ -2,6 +2,7 @@ import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-na
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { C, type, T } from '../components/theme';
+import { PRIVACY_URL } from '../lib/api';
 import PageMeta from '../components/PageMeta';
 
 const SECTIONS = [
@@ -34,9 +35,21 @@ export default function About() {
         </View>
       ))}
 
-      <Pressable style={styles.link} onPress={() => Linking.openURL('https://reportfraud.ftc.gov')}>
+      <Pressable style={styles.link} onPress={() => Linking.openURL(PRIVACY_URL)}>
+        <Ionicons name="document-text-outline" size={20} color={C.text} />
+        <Text style={styles.linkText}>Read the full privacy policy</Text>
+        <Ionicons name="open-outline" size={18} color={C.muted} />
+      </Pressable>
+
+      <Pressable style={[styles.link, { borderTopWidth: 0 }]} onPress={() => Linking.openURL('https://reportfraud.ftc.gov')}>
         <Ionicons name="flag-outline" size={20} color={C.text} />
-        <Text style={styles.linkText}>Report a scam to the FTC</Text>
+        <Text style={styles.linkText}>Report a scam in the US (FTC)</Text>
+        <Ionicons name="open-outline" size={18} color={C.muted} />
+      </Pressable>
+
+      <Pressable style={[styles.link, { borderTopWidth: 0 }]} onPress={() => Linking.openURL('https://cicc.gov.ph')}>
+        <Ionicons name="flag-outline" size={20} color={C.text} />
+        <Text style={styles.linkText}>Report a scam in the Philippines (CICC hotline 1326)</Text>
         <Ionicons name="open-outline" size={18} color={C.muted} />
       </Pressable>
 

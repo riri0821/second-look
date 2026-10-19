@@ -12,3 +12,5 @@ services:
         sync: false
       - key: VIRUSTOTAL_KEY
         sync: false
+      - key: CONTACT_EMAIL
+        sync: false
