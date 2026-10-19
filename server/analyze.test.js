@@ -81,3 +81,19 @@ test('explains reasons in Filipino when asked', async () => {
   const r = await analyze('Ibigay mo ang OTP para ma-verify', offline, 'fil');
   assert.match(reasons(r.messageFlags), /OTP mo/);
 });
+
+test('real bank safety messages are not flagged', async () => {
+  const real = [
+    'BPI: Your OTP is 482913. Do not share this code with anyone. BPI will never ask for your OTP.',
+    'BPI: Never share your OTP, PIN or password with anyone. BPI will never call, text or email you to ask for them.',
+    'BPI: Your BPI Online password will expire in 7 days. Log in to the BPI app to update it.',
+    'BDO: Huwag ibigay ang OTP mo kahit kanino. Hindi namin ito hihingin.',
+    'BPI: You paid PHP 1,250.00 to MERALCO via the BPI app. If you did not make this transaction, call our hotline at (02) 889-10000.',
+  ];
+  for (const text of real) assert.equal((await analyze(text, offline)).verdict, 'no_red_flags', text);
+});
+
+test('a warning sentence does not hide a scam request after it', async () => {
+  const r = await analyze('Do not ignore this message. Send the OTP we sent you now to keep your account.', offline);
+  assert.match(reasons(r.messageFlags), /security code/);
+});

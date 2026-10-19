@@ -34,7 +34,7 @@ const REDIRECTORS = [
 // Pressure words, in English and Filipino.
 const PRESSURE_WORDS = [
   'urgent', 'immediately', 'suspended', 'locked', 'blocked', 'verify your', 'confirm your',
-  'unusual activity', 'final notice', 'act now', 'within 24 hours', 'within 2 hours', 'will expire',
+  'unusual activity', 'final notice', 'act now', 'within 24 hours', 'within 2 hours',
   'expires today', 'last chance', 'agad', 'ngayon din', 'huling paalala', 'na-suspend', 'na suspend',
   'ma-block', 'na-block', 'mawawala', 'i-verify', 'i-update', 'bago mag-expire',
 ];
@@ -58,7 +58,8 @@ const TACTICS = [
   },
   {
     points: 25,
-    re: /\b(card number|cvv|cvc|social security number|ssn|bank details|account number|password|mpin|pin code|full name and address)\b/i,
+    // Only when it asks you to hand them over; "update your password in the app" is normal.
+    re: /\b(send|reply|provide|give|share|tell|forward|type|ibigay|i-?send|ipadala|ilagay)\b.{0,40}\b(card number|cvv|cvc|social security number|ssn|bank details|account number|password|mpin|pin code|full name and address)\b/i,
     key: 'private',
   },
   {
@@ -92,7 +93,8 @@ const TACTICS = [
     key: 'loan',
   },
   {
-    points: 15,
+    // A gentle note only: real banks also say "call our hotline".
+    points: 5,
     re: /\b(call|contact|tawagan|i-?text)\b.{0,40}(\+?\d[\d\s().-]{8,}\d)/i,
     key: 'call',
   },
@@ -336,7 +338,20 @@ export function brandInText(text) {
   return null;
 }
 
+// Real banks warn "do not share your OTP" and "we will never ask for your password".
+// Those warnings use the same words as scams, so sentences that say NOT to do something
+// are left out before looking for scam tactics.
+const NEGATION = /\b(do not|don't|dont|never|will not|won't|huwag|wag|hindi (namin|kailanman|kailangan))\b/i;
+
+export function withoutWarnings(text) {
+  return text
+    .split(/[.!?\n;]+|,\s*(?=(?:but|pero|tapos|then)\b)/i)
+    .filter(part => !NEGATION.test(part))
+    .join('. ');
+}
+
 export function textChecks(text, lang = 'en') {
+  text = withoutWarnings(text);
   const lower = text.toLowerCase();
   const flags = [];
   const pressure = PRESSURE_WORDS.filter(w => lower.includes(w));

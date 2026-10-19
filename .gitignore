@@ -5,3 +5,4 @@ node_modules/
 *.png
 !app/assets/*.png
 .claude/
+*.docx
