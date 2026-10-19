@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { analyze } from './analyze.js';
 
 const PORT = process.env.PORT || 3123;
-const CONTACT_EMAIL = process.env.CONTACT_EMAIL || 'privacy@example.com';
+const CONTACT_EMAIL = process.env.CONTACT_EMAIL || '';
 const PRIVACY_HTML = readFileSync(new URL('./privacy.html', import.meta.url), 'utf8').replaceAll('{{CONTACT_EMAIL}}', CONTACT_EMAIL);
 
 // Simple per-IP limit so a public server can't be hammered: 30 checks per minute.

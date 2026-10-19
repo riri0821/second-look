@@ -5,16 +5,14 @@ import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { C, VERDICTS, type, T } from '../../components/theme';
 import { LESSONS } from '../../data/lessons';
-import { getBestStreak, getLessonsDone } from '../../lib/storage';
+import { getLessonsDone } from '../../lib/storage';
 import PageMeta from '../../components/PageMeta';
 
 export default function LearnScreen() {
   const [done, setDone] = useState([]);
-  const [best, setBest] = useState(0);
 
   useFocusEffect(useCallback(() => {
     getLessonsDone().then(setDone);
-    getBestStreak().then(setBest);
   }, []));
 
   return (
@@ -28,9 +26,9 @@ export default function LearnScreen() {
 
         <Pressable style={({ pressed }) => [styles.quiz, pressed && styles.pressed]} onPress={() => router.push('/quiz')}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.quizTitle}>Real or scam?</Text>
+            <Text style={styles.quizTitle}>Test your knowledge</Text>
             <Text style={styles.quizSub}>
-              {best > 0 ? `Your best: ${best} in a row. Can you beat it?` : 'Test yourself on 12 real-looking messages.'}
+              Can you tell a real message from a scam? Try 12 examples.
             </Text>
           </View>
           <Ionicons name="arrow-forward" size={24} color="#fff" />

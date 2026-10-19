@@ -18,7 +18,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="lesson/[id]" options={{ title: '' }} />
-        <Stack.Screen name="quiz" options={{ title: 'Real or scam?' }} />
+        <Stack.Screen name="quiz" options={{ title: 'Test your knowledge' }} />
         <Stack.Screen name="result/[id]" options={{ title: 'Saved check' }} />
         <Stack.Screen name="about" options={{ title: 'About & privacy', presentation: 'modal' }} />
       </Stack>
