@@ -374,8 +374,32 @@ export async function analyze(text, env = process.env, lang = 'en') {
     messageFlags.push({ points: 25, code: 'claims', reason: say(lang, 'claims', { brand: brand.name, host: new URL(offsite.finalUrl).hostname }) });
   }
 
+  return result(links, messageFlags);
+}
+
+function result(links, messageFlags) {
   const all = [...messageFlags, ...links.flatMap(l => l.flags)];
   const score = Math.min(100, all.reduce((s, f) => s + f.points, 0));
   const verdict = score >= 60 ? 'danger' : score >= 25 ? 'suspicious' : 'no_red_flags';
   return { score, verdict, links, messageFlags, checkedAt: new Date().toISOString() };
+}
+
+// Is this input just one link (or bare website name like "agoda.com") and nothing else?
+export function asSingleLink(input) {
+  const s = input.trim();
+  if (!s || /\s/.test(s)) return null;
+  const candidate = /^https?:\/\//i.test(s) ? s : `http://${s}`;
+  try {
+    const u = new URL(candidate);
+    return /\.[a-z]{2,}$/i.test(u.hostname) || net.isIP(u.hostname) ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+
+// Checks a single link directly: no message, so only the website itself is judged.
+export async function analyzeLink(input, env = process.env, lang = 'en') {
+  const url = asSingleLink(input);
+  if (!url) throw new Error('not a link');
+  return result([await checkUrl(url, env, lang)], []);
 }

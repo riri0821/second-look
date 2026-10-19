@@ -1,6 +1,6 @@
 import http from 'node:http';
 import { readFileSync } from 'node:fs';
-import { analyze } from './analyze.js';
+import { analyze, analyzeLink, asSingleLink } from './analyze.js';
 import { SUPPORTED_LANGS } from './messages.js';
 
 const PORT = process.env.PORT || 3123;
@@ -14,16 +14,20 @@ setInterval(() => hits.clear(), 60_000).unref();
 
 const json = (res, status, body) => res.writeHead(status, { 'Content-Type': 'application/json' }).end(JSON.stringify(body));
 
-async function handleAnalyze(req, res) {
+async function handleAnalyze(req, res, { linkOnly = false } = {}) {
   let body = '';
   for await (const chunk of req) {
     body += chunk;
     if (body.length > 20000) return json(res, 413, { error: 'Message is too long' });
   }
   try {
-    const { text, lang } = JSON.parse(body);
-    if (typeof text !== 'string' || !text.trim()) throw new Error('missing text');
-    json(res, 200, await analyze(text, process.env, SUPPORTED_LANGS.includes(lang) ? lang : 'en'));
+    const { text, url, lang } = JSON.parse(body);
+    const input = linkOnly ? url : text;
+    if (typeof input !== 'string' || !input.trim()) throw new Error(linkOnly ? 'missing url' : 'missing text');
+    const language = SUPPORTED_LANGS.includes(lang) ? lang : 'en';
+    // A message that is only a link gets the direct link check.
+    const direct = linkOnly || asSingleLink(input);
+    json(res, 200, { ...(await (direct ? analyzeLink(input, process.env, language) : analyze(input, process.env, language))), mode: direct ? 'link' : 'message' });
   } catch (e) {
     json(res, 400, { error: e.message });
   }
@@ -46,6 +50,8 @@ const server = http.createServer(async (req, res) => {
 
   // /v1/analyze is the current API. /analyze stays for app versions released before it.
   if (req.method === 'POST' && (req.url === '/v1/analyze' || req.url === '/analyze')) return handleAnalyze(req, res);
+  // Checks one link directly: { "url": "https://..." }
+  if (req.method === 'POST' && req.url === '/v1/check-link') return handleAnalyze(req, res, { linkOnly: true });
 
   res.writeHead(404).end();
 });

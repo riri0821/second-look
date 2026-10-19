@@ -13,6 +13,9 @@ import { timeAgo } from '../../lib/time';
 import PageMeta from '../../components/PageMeta';
 import { useLanguage } from '../../i18n';
 
+// One link and nothing else, like "bit.ly/3xK9" or "https://bdo-login.top".
+const isJustALink = s => /^(https?://)?[^s/]+.[a-z]{2,}(/S*)?$/i.test(s.trim());
+
 // The message box starts at about 3 lines and grows with the text, up to a limit.
 const INPUT_MIN = 110;
 const INPUT_MAX = 280;
@@ -39,7 +42,11 @@ export default function CheckScreen() {
 
   async function paste() {
     const clip = await Clipboard.getStringAsync();
-    if (clip) { setText(clip); setResult(null); }
+    if (!clip) return;
+    setText(clip);
+    setResult(null);
+    // A pasted link is checked right away; a longer message waits for Check it.
+    if (isJustALink(clip)) check(clip);
   }
 
   function startOver() {
@@ -50,14 +57,14 @@ export default function CheckScreen() {
     scrollRef.current?.scrollTo({ y: 0, animated: true });
   }
 
-  async function check() {
+  async function check(input = text) {
     setLoading(true);
     setError('');
     setResult(null);
     try {
-      const data = await checkMessage(text, lang);
+      const data = await checkMessage(input, lang);
       setResult(data);
-      await addHistory(text, data);
+      await addHistory(input, data);
       setRecent((await getHistory()).slice(0, 3));
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     } catch {
@@ -117,7 +124,7 @@ export default function CheckScreen() {
             <Pressable
               style={({ pressed }) => [button.primary, styles.half, !canCheck && !loading && styles.disabled, pressed && styles.pressed]}
               disabled={!canCheck}
-              onPress={check}
+              onPress={() => check()}
               accessibilityRole="button"
             >
               <Text style={button.primaryText}>{loading ? t.check.checking : t.check.checkIt}</Text>

@@ -106,3 +106,13 @@ This OTP is to approve your purchase at agoda.com amounting to PHP 16,057.90 usi
 Are you sure that this is a valid transaction? If yes, the SECRET OTP is 022319. If this is not your transaction, do not use this OTP and call (+632) 889-10000`;
   assert.equal((await analyze(text, offline)).verdict, 'no_red_flags');
 });
+
+test('recognizes a message that is just a link', async () => {
+  const { asSingleLink, analyzeLink } = await import('./analyze.js');
+  assert.equal(asSingleLink('  bdo-secure-login.top/verify '), 'http://bdo-secure-login.top/verify');
+  assert.equal(asSingleLink('agoda.com'), 'http://agoda.com/');
+  assert.equal(asSingleLink('Your OTP is 482913'), null);
+  assert.equal(asSingleLink('hello'), null);
+  const r = await analyzeLink('http://paypa1-secure-login.xyz/verify', offline);
+  assert.notEqual(r.verdict, 'no_red_flags');
+});
