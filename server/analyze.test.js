@@ -97,3 +97,12 @@ test('a warning sentence does not hide a scam request after it', async () => {
   const r = await analyze('Do not ignore this message. Send the OTP we sent you now to keep your account.', offline);
   assert.match(reasons(r.messageFlags), /security code/);
 });
+
+test('a real BPI transaction OTP alert is not flagged', async () => {
+  const text = `[BPI] TRANSACTION ALERT: BEWARE OF SCAMMERS. NEVER SHARE THIS SECRET ONE-TIME PIN (OTP) WITH ANYONE.
+
+This OTP is to approve your purchase at agoda.com amounting to PHP 16,057.90 using your BPI debit card ending in 0420.
+
+Are you sure that this is a valid transaction? If yes, the SECRET OTP is 022319. If this is not your transaction, do not use this OTP and call (+632) 889-10000`;
+  assert.equal((await analyze(text, offline)).verdict, 'no_red_flags');
+});
