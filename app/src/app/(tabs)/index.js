@@ -14,7 +14,7 @@ import PageMeta from '../../components/PageMeta';
 import { useLanguage } from '../../i18n';
 
 // One link and nothing else, like "bit.ly/3xK9" or "https://bdo-login.top".
-const isJustALink = s => /^(https?://)?[^s/]+.[a-z]{2,}(/S*)?$/i.test(s.trim());
+const isJustALink = s => /^(https?:\/\/)?[^\s/]+\.[a-z]{2,}(\/\S*)?$/i.test(s.trim());
 
 // The message box starts at about 3 lines and grows with the text, up to a limit.
 const INPUT_MIN = 110;
