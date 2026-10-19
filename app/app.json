@@ -32,7 +32,8 @@
           "backgroundColor": "#0A0A0A"
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      "expo-font"
     ],
     "scheme": "secondlook"
   }
