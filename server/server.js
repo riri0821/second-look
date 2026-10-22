@@ -62,7 +62,7 @@ async function handleAnalyze(req, res, { linkOnly = false } = {}) {
   }
 }
 
-const server = http.createServer(async (req, res) => {
+export const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.end();
