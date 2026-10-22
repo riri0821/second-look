@@ -1,53 +1,90 @@
 # Second Look
 
-Paste a suspicious text, email or link; Second Look tells you if it looks like a scam and why.
+A scam checker for text messages, emails and links, built for people in the Philippines.
 
-- `app/`: the mobile app (React Native + Expo SDK 57)
-- `server/`: the checking backend (Node.js, no dependencies), hosted at https://second-look-server.onrender.com
+Paste a message you're not sure about. Second Look tells you if it looks like a scam, explains why in
+plain words, and says what to do next. It works in English and Filipino, and it never stores the
+messages people check.
 
-## Open the app on your iPhone
+Available as a phone app (Android and iPhone, built with Expo) and as a website.
 
-1. Open a **new PowerShell window** and go to the app folder first:
-   ```
-   cd C:\Users\user\Desktop\PCheck\app
-   ```
-   (If you skip this, npx offers to install `expo@58`. Answer **n**.)
-2. Sign in to Expo for this window. Paste your token from expo.dev → Account settings → Access tokens:
-   ```
-   $env:EXPO_TOKEN="your-token"
-   ```
-   Check with `npx expo whoami`; it should print `0xakariri`.
-3. Start the app:
-   - Good home Wi-Fi: `npx expo start -c`
-   - Weak Wi-Fi or mobile data: `npx expo start -c --tunnel`
-4. On the iPhone: open **Expo Go**, pull down to refresh, tap **Second Look** under Development servers.
-   Or scan the QR code in the terminal with the **Camera** app.
+## What it catches
 
-The server is online, so you don't need to run it. The first check after 15 idle minutes takes ~30 seconds.
+- Fake websites that copy real ones, like `paypa1.com` or `bdo-online-verify.top`
+- Company names used in websites they don't own, across 170+ banks, e-wallets, couriers,
+  government offices and online stores, about 70 of them Philippine
+- Links hidden behind shorteners or redirects through Google, Facebook, LinkedIn and Outlook
+- Websites created only days or weeks ago
+- Scams with no link at all: requests for your OTP, payment in gift cards or load, threats of arrest,
+  fake prizes, "bagong number ko to" money requests, fake jobs and loans, in English and Tagalog
+- Websites that several Second Look users have already reported as scams
 
-**Changes:** code edits refresh on the phone automatically. After changing `.env`, `app.json` or
-installing packages, stop with Ctrl+C and run step 3 again. Shake the phone → **Reload** if it gets stuck.
+Real bank messages that warn people *not* to share their OTP are recognized as safe. That case was a
+real false alarm during testing and is now covered by tests.
 
-## Server
+## Other features
 
-Pushing to GitHub redeploys it on Render automatically. To run it locally instead:
+- Six short lessons on spotting scams and a 12-question quiz, with Philippine examples
+- History of past checks, kept only on the user's device
+- "Was this result right?" feedback and "Report this website" buttons
+- Senior-friendly design: large text, big buttons, plain language
+
+## Privacy and security
+
+- Messages are checked in memory and never saved or logged.
+- Only website addresses are looked up with outside services, never the message itself.
+- Reports store the website name and a one-way code instead of the reporter's address.
+- The server refuses to fetch private or internal addresses (SSRF protection), limits each client
+  to 30 checks a minute, and uses parameterized database queries only.
+- Database tables use row level security, and the app's database account can only do what it needs.
+
+A security self-assessment of the server found and fixed a
+rate limit weakness and a false-positive issue. Both are covered by regression tests.
+
+## How it's built
+
+| Part | Technology |
+| --- | --- |
+| App and website | React Native, Expo (SDK 57), Expo Router |
+| Server | Node.js, PostgreSQL (Supabase) |
+| Hosting | Render |
+| Tests | Node test runner, GitHub Actions on every push |
+
+```
+app/      the phone app and website
+server/   the checker API, scam patterns, brand list and database code
+```
+
+## Running it locally
+
+Server:
+
 ```
 cd server
+npm install
 npm start
 ```
-Then set `EXPO_PUBLIC_API_URL=http://<your-PC-IP>:3123` in `app/.env`.
-Optional: add Google Safe Browsing / VirusTotal keys in Render's Environment settings.
 
-## What it checks
-- Lookalike domains (`paypa1.com`), brand names in fake domains, punycode, raw IPs
-- Link shorteners (follows them to the real destination)
-- Domain age via RDAP (brand-new sites are a red flag)
-- Risky domain endings, pressure language ("urgent", "suspended")
-- Message mentions a brand but links elsewhere
-- Google Safe Browsing and VirusTotal (if keys are set)
+It runs on port 3123. Copy `server/.env.example` to `server/.env` to add optional settings like the
+database connection or a Google Safe Browsing key. Without them, the core checks still work.
+
+App:
+
+```
+cd app
+npm install
+npx expo start
+```
+
+Open it in Expo Go on a phone, or press `w` for the website. Set `EXPO_PUBLIC_API_URL` in `app/.env`
+to choose which server the app talks to.
 
 ## Tests
+
 ```
 cd server
 npm test
 ```
+
+The tests cover real scam and real bank messages in both languages, the link checks, the database
+code and the server's protections.
