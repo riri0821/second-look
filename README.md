@@ -31,6 +31,10 @@ through, and a real message can sometimes be flagged. A "no red flags" result do
 message is safe. When in doubt, contact the company yourself using the number on your card or their
 official app, never the one in the message.
 
+That is why Second Look explains every result instead of only giving a score. Each check, lesson and
+quiz question teaches the warning signs, so people learn to spot scams on their own, even the ones
+the checker misses.
+
 ## Other features
 
 - Six short lessons on spotting scams and a 12-question quiz, with Philippine examples
