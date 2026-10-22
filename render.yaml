@@ -8,6 +8,9 @@ services:
     startCommand: node server.js
     healthCheckPath: /health
     envVars:
+      # Render sits in front of the server; trust only the address its proxy adds.
+      - key: TRUST_PROXY
+        value: "1"
       - key: GOOGLE_SAFE_BROWSING_KEY
         sync: false
       - key: VIRUSTOTAL_KEY

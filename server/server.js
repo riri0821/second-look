@@ -1,5 +1,6 @@
 import http from 'node:http';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { analyze, analyzeLink, asSingleLink } from './analyze.js';
 import { SUPPORTED_LANGS } from './messages.js';
 
@@ -11,6 +12,18 @@ const PRIVACY_HTML = readFileSync(new URL('./privacy.html', import.meta.url), 'u
 const LIMIT = 30;
 const hits = new Map();
 setInterval(() => hits.clear(), 60_000).unref();
+
+// The address to rate-limit by. Behind Render's proxy (TRUST_PROXY=1) the real client is the
+// LAST entry of X-Forwarded-For, the one the proxy adds itself; earlier entries come from the
+// client and can be anything. Without a proxy, the header is ignored entirely.
+export function clientAddress(req, trustProxy = process.env.TRUST_PROXY === '1') {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (trustProxy && typeof forwarded === 'string') {
+    const last = forwarded.split(',').map(s => s.trim()).filter(Boolean).pop();
+    if (last) return last;
+  }
+  return req.socket.remoteAddress;
+}
 
 const json = (res, status, body) => res.writeHead(status, { 'Content-Type': 'application/json' }).end(JSON.stringify(body));
 
@@ -43,7 +56,8 @@ const server = http.createServer(async (req, res) => {
     return res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }).end(PRIVACY_HTML);
   }
 
-  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress;
+  const ip = clientAddress(req);
+  if (hits.size > 50_000) hits.clear(); // cap memory if many addresses appear at once
   const count = (hits.get(ip) || 0) + 1;
   hits.set(ip, count);
   if (count > LIMIT) return json(res, 429, { error: 'Too many checks, try again in a minute' });
@@ -56,4 +70,7 @@ const server = http.createServer(async (req, res) => {
   res.writeHead(404).end();
 });
 
-server.listen(PORT, () => console.log(`Second Look server on http://localhost:${PORT}`));
+// Start listening only when run directly (tests import this file).
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  server.listen(PORT, () => console.log(`Second Look server on http://localhost:${PORT}`));
+}
