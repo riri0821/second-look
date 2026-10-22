@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Text } from 'react-native';
+import { Platform, Text } from 'react-native';
 import { Redirect, Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,7 +26,8 @@ export default function TabsLayout() {
   useEffect(() => { isOnboarded().then(setOnboardedState); }, []);
 
   if (onboarded === null) return null;
-  if (!onboarded) return <Redirect href="/onboarding" />;
+  // The website opens straight on the homepage; the intro screens are for the phone app only.
+  if (!onboarded && Platform.OS !== 'web') return <Redirect href="/onboarding" />;
 
   return (
     <Tabs
