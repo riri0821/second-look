@@ -3,6 +3,10 @@ import dns from 'node:dns/promises';
 import net from 'node:net';
 import { BRAND_LIST, COMMON_WORDS, GENERIC_IN_HOSTS } from './brands.js';
 import { say } from './messages.js';
+import { reportCount } from './db.js';
+
+// A website counts as reported once this many different people have reported it.
+export const REPORT_THRESHOLD = 3;
 
 const SHORTENERS = new Set([
   'bit.ly', 'tinyurl.com', 't.co', 'goo.gl', 'is.gd', 'ow.ly', 'cutt.ly',
@@ -136,7 +140,7 @@ function distance(a, b) {
   return dp[a.length][b.length];
 }
 
-function registrableDomain(host) {
+export function registrableDomain(host) {
   const parts = host.split('.');
   const lastTwo = parts.slice(-2).join('.');
   return SECOND_LEVEL.has(lastTwo) ? parts.slice(-3).join('.') : lastTwo;
@@ -306,6 +310,14 @@ async function checkUrl(url, env, lang) {
       if (age !== null && age < 30) add(35, 'brandNew', { age });
       else if (age !== null && age < 180) add(15, 'young', { age });
     } catch { /* not every website has public registration info */ }
+  }
+
+  // Websites other Second Look users reported as scams.
+  if (!isAnyBrandSite(host)) {
+    try {
+      const n = await reportCount(registrableDomain(host));
+      if (n >= REPORT_THRESHOLD) add(60, 'reported', { n });
+    } catch { /* the database being down must never block a check */ }
   }
 
   if (env.GOOGLE_SAFE_BROWSING_KEY) {

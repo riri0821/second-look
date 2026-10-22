@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { analyze, analyzeLink, asSingleLink } from './analyze.js';
 import { SUPPORTED_LANGS } from './messages.js';
+import { handleFeedback, handleReport } from './reports.js';
 
 const PORT = process.env.PORT || 3123;
 const CONTACT_EMAIL = process.env.CONTACT_EMAIL || '';
@@ -27,14 +28,29 @@ export function clientAddress(req, trustProxy = process.env.TRUST_PROXY === '1')
 
 const json = (res, status, body) => res.writeHead(status, { 'Content-Type': 'application/json' }).end(JSON.stringify(body));
 
-async function handleAnalyze(req, res, { linkOnly = false } = {}) {
+// Reads a JSON body, refusing anything over the size limit. Returns null after answering 413/400.
+async function readJson(req, res) {
   let body = '';
   for await (const chunk of req) {
     body += chunk;
-    if (body.length > 20000) return json(res, 413, { error: 'Message is too long' });
+    if (body.length > 20000) {
+      json(res, 413, { error: 'Message is too long' });
+      return null;
+    }
   }
   try {
-    const { text, url, lang } = JSON.parse(body);
+    const data = JSON.parse(body);
+    if (data && typeof data === 'object' && !Array.isArray(data)) return data;
+  } catch { /* fall through */ }
+  json(res, 400, { error: 'invalid JSON' });
+  return null;
+}
+
+async function handleAnalyze(req, res, { linkOnly = false } = {}) {
+  const data = await readJson(req, res);
+  if (!data) return;
+  try {
+    const { text, url, lang } = data;
     const input = linkOnly ? url : text;
     if (typeof input !== 'string' || !input.trim()) throw new Error(linkOnly ? 'missing url' : 'missing text');
     const language = SUPPORTED_LANGS.includes(lang) ? lang : 'en';
@@ -66,6 +82,19 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && (req.url === '/v1/analyze' || req.url === '/analyze')) return handleAnalyze(req, res);
   // Checks one link directly: { "url": "https://..." }
   if (req.method === 'POST' && req.url === '/v1/check-link') return handleAnalyze(req, res, { linkOnly: true });
+  // "Report this website" and "Was this result right?". Validated, then stored with parameterized queries.
+  if (req.method === 'POST' && (req.url === '/v1/report' || req.url === '/v1/feedback')) {
+    const data = await readJson(req, res);
+    if (!data) return;
+    try {
+      return json(res, 200, req.url === '/v1/report' ? await handleReport(data, ip) : await handleFeedback(data));
+    } catch (e) {
+      // Validation messages are safe to show; database errors are logged, never sent back.
+      if (/^(missing|not a|bad )/.test(e.message)) return json(res, 400, { error: e.message });
+      console.error('storage error:', e.code || e.message);
+      return json(res, 503, { error: 'Could not save right now' });
+    }
+  }
 
   res.writeHead(404).end();
 });

@@ -21,6 +21,13 @@ export const STRINGS = {
       note: 'Note',
       linkPassed: 'The link passed every check.',
       noLinks: 'No links found in this message. Be wary of anyone asking for money, codes or passwords.',
+      wasRight: 'Was this result right?',
+      yes: 'Yes',
+      no: 'No',
+      thanksFeedback: 'Thank you. This helps make Second Look more accurate.',
+      report: 'Report this website as a scam',
+      reported: 'Reported. Thank you for helping protect others.',
+      sendFailed: 'Could not send right now. Please try again later.',
       nextTitle: 'What to do now',
       next: {
         danger: [
@@ -160,6 +167,13 @@ export const STRINGS = {
       note: 'Paalala',
       linkPassed: 'Pumasa ang link sa lahat ng pagsusuri.',
       noLinks: 'Walang link sa mensaheng ito. Mag-ingat sa sinumang humihingi ng pera, code o password.',
+      wasRight: 'Tama ba ang resultang ito?',
+      yes: 'Oo',
+      no: 'Hindi',
+      thanksFeedback: 'Salamat. Nakakatulong ito para mas maging tama ang Second Look.',
+      report: 'I-report ang website na ito bilang scam',
+      reported: 'Na-report na. Salamat sa pagtulong na protektahan ang iba.',
+      sendFailed: 'Hindi maipadala ngayon. Subukan ulit mamaya.',
       nextTitle: 'Ano ang gagawin ngayon',
       next: {
         danger: [

@@ -22,3 +22,24 @@ export async function checkMessage(text, lang = 'en') {
   if (!res.ok) throw new Error(data.error || 'Check failed');
   return data;
 }
+
+async function send(path, body) {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error('Could not send');
+  return res.json();
+}
+
+// "Report this website as a scam". Only the website address is sent.
+export const reportSite = url => send('/v1/report', { url });
+
+// "Was this result right?" Only the verdict, the answer and which checks fired are sent.
+export const sendFeedback = (result, correct, lang) => send('/v1/feedback', {
+  verdict: result.verdict,
+  correct,
+  lang,
+  codes: [...result.messageFlags, ...result.links.flatMap(l => l.flags)].map(f => f.code).filter(Boolean),
+});

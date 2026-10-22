@@ -17,3 +17,9 @@ services:
         sync: false
       - key: CONTACT_EMAIL
         sync: false
+      # Database for scam reports and feedback (Supabase connection string, app user)
+      - key: DATABASE_URL
+        sync: false
+      # Long random secret for the one-way reporter code
+      - key: REPORT_SECRET
+        sync: false

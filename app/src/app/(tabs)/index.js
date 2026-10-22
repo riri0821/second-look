@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { C, VERDICTS, button, type, T } from '../../components/theme';
 import ResultCard from '../../components/ResultCard';
+import ResultActions from '../../components/ResultActions';
 import { ResultSkeleton } from '../../components/Skeleton';
 import { checkMessage } from '../../lib/api';
 import { addHistory, getHistory } from '../../lib/storage';
@@ -144,6 +145,7 @@ export default function CheckScreen() {
           {result && (
             <View style={{ marginTop: 28 }}>
               <ResultCard result={result} />
+              <ResultActions result={result} />
               <Pressable style={({ pressed }) => [button.secondary, { marginTop: 14 }, pressed && styles.pressed]} onPress={startOver} accessibilityRole="button">
                 <Text style={button.secondaryText}>{t.check.checkAnother}</Text>
               </Pressable>
