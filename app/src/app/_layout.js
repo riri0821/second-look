@@ -1,13 +1,30 @@
+import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { C, T } from '../components/theme';
 import { LanguageProvider, useLanguage } from '../i18n';
 
+// On a computer screen the app is shown as a centered column instead of stretching edge to edge.
+const COLUMN = 640;
+
 export default function RootLayout() {
   return (
     <LanguageProvider>
-      <Screens />
+      <Frame>
+        <Screens />
+      </Frame>
     </LanguageProvider>
+  );
+}
+
+function Frame({ children }) {
+  const { width } = useWindowDimensions();
+  const wide = Platform.OS === 'web' && width > COLUMN + 40;
+  if (!wide) return children;
+  return (
+    <View style={styles.backdrop}>
+      <View style={styles.column}>{children}</View>
+    </View>
   );
 }
 
@@ -36,3 +53,11 @@ function Screens() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  backdrop: { flex: 1, backgroundColor: C.surface, alignItems: 'center' },
+  column: {
+    flex: 1, width: '100%', maxWidth: COLUMN, backgroundColor: C.bg,
+    borderLeftWidth: 1, borderRightWidth: 1, borderColor: C.border, overflow: 'hidden',
+  },
+});
