@@ -254,7 +254,7 @@ export const LESSONS = [
       {
         kind: 'text',
         title: 'Report it',
-        body: 'Tell your bank or e-wallet right away so they can watch your account. Block and report the sender in your messages app. In the US, you can also forward scam texts to 7726 and report at ReportFraud.ftc.gov.',
+        body: 'Tell your bank or e-wallet right away so they can watch your account. Block and report the sender in your messages app. Reporting helps stop the same scam reaching others.',
       },
       {
         kind: 'text',

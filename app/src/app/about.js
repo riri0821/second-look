@@ -12,7 +12,6 @@ export default function About() {
   const a = t.about;
   const links = [
     { icon: 'document-text-outline', label: a.privacyPolicy, url: PRIVACY_URL },
-    { icon: 'flag-outline', label: a.reportUS, url: 'https://reportfraud.ftc.gov' },
   ];
 
   return (
