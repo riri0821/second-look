@@ -6,6 +6,7 @@ import { SUPPORTED_LANGS } from './messages.js';
 import { handleFeedback, handleReport } from './reports.js';
 
 const PORT = process.env.PORT || 3123;
+// Set on the host (Render), so no personal address lives in the code.
 const CONTACT_EMAIL = process.env.CONTACT_EMAIL || '';
 const PRIVACY_HTML = readFileSync(new URL('./privacy.html', import.meta.url), 'utf8').replaceAll('{{CONTACT_EMAIL}}', CONTACT_EMAIL);
 
