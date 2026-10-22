@@ -6,7 +6,8 @@ Paste a message you're not sure about. Second Look tells you if it looks like a 
 plain words, and says what to do next. It works in English and Filipino, and it never stores the
 messages people check.
 
-Available as a phone app (Android and iPhone, built with Expo) and as a website.
+Try the website at [secondlook.tamara-dev.com](https://secondlook.tamara-dev.com). The phone app
+(Android and iPhone, built with Expo) is still in development and not yet in the app stores.
 
 ## What it catches
 
