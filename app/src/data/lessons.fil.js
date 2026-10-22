@@ -249,7 +249,7 @@ export const LESSONS_FIL = [
       {
         kind: 'text',
         title: 'I-report ito',
-        body: 'Sa Pilipinas, tumawag sa CICC scam hotline 1326 o mag-report sa cicc.gov.ph. Nakakatulong ang pag-report para hindi na umabot sa iba ang parehong scam.',
+        body: 'Sabihan agad ang bangko o e-wallet mo para mabantayan nila ang account mo. I-block at i-report ang nagpadala sa messages app mo. Nakakatulong ito para hindi na umabot sa iba ang parehong scam.',
       },
       {
         kind: 'text',

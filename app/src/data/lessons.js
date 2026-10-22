@@ -254,7 +254,7 @@ export const LESSONS = [
       {
         kind: 'text',
         title: 'Report it',
-        body: 'In the Philippines, call the CICC scam hotline 1326 or report at cicc.gov.ph. In the US, forward scam texts to 7726 and report at ReportFraud.ftc.gov. Reporting helps stop the same scam reaching others.',
+        body: 'Tell your bank or e-wallet right away so they can watch your account. Block and report the sender in your messages app. In the US, you can also forward scam texts to 7726 and report at ReportFraud.ftc.gov.',
       },
       {
         kind: 'text',
