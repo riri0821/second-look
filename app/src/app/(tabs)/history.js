@@ -9,6 +9,7 @@ import { clearHistory, getHistory, removeHistory } from '../../lib/storage';
 import { timeAgo } from '../../lib/time';
 import PageMeta from '../../components/PageMeta';
 import { fill, useLanguage } from '../../i18n';
+import { useWide } from '../../lib/layout';
 
 // RN Alert buttons don't work on web, so fall back to the browser's confirm there.
 function confirm(title, message, words, onYes) {
@@ -26,6 +27,7 @@ const PAGE_SIZE = 10;
 
 export default function HistoryScreen() {
   const { t } = useLanguage();
+  const wide = useWide();
   const h = t.history;
   const [items, setItems] = useState(null);
   const [page, setPage] = useState(0);
@@ -44,7 +46,7 @@ export default function HistoryScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <PageMeta title="History" description={'Your past message checks, saved only on this phone. Look at a result again or delete it anytime.'} />
-      <ScrollView ref={scrollRef} contentContainerStyle={styles.container}>
+      <ScrollView ref={scrollRef} contentContainerStyle={[styles.container, wide && styles.containerWide]}>
         <Text style={type.h1} accessibilityRole="header">{h.title}</Text>
         <View style={styles.privacy}>
           <Ionicons name="lock-closed" size={16} color={C.muted} />
@@ -136,6 +138,7 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   container: { padding: 24, paddingTop: 52, paddingBottom: 40 },
+  containerWide: { width: '100%', maxWidth: 900, alignSelf: 'center', padding: 40, paddingTop: 40 },
   pressed: { opacity: 0.7 },
   disabled: { opacity: 0.25 },
   pager: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 20 },

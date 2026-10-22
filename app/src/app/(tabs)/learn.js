@@ -8,9 +8,11 @@ import { lessonsFor } from '../../data/lessons';
 import { getLessonsDone } from '../../lib/storage';
 import PageMeta from '../../components/PageMeta';
 import { fill, useLanguage } from '../../i18n';
+import { PAGE_MAX, useWide } from '../../lib/layout';
 
 export default function LearnScreen() {
   const { t, lang } = useLanguage();
+  const wide = useWide();
   const lessons = lessonsFor(lang);
   const [done, setDone] = useState([]);
 
@@ -21,7 +23,7 @@ export default function LearnScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <PageMeta title="Spot the scam" description={'Short, plain-English lessons on spotting scam texts, fake websites and phishing links, plus a quiz to test yourself.'} />
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={[styles.container, wide && styles.containerWide]}>
         <Text style={type.h1} accessibilityRole="header">{t.learn.title}</Text>
         <Text style={[type.sub, { marginTop: 8 }]}>{t.learn.intro}</Text>
 
@@ -43,12 +45,13 @@ export default function LearnScreen() {
           <Text style={styles.progress}>{fill(t.learn.done, { done: done.length, total: lessons.length })}</Text>
         </View>
 
+        <View style={wide ? styles.grid : null}>
         {lessons.map((l, i) => {
           const isDone = done.includes(l.id);
           return (
             <Pressable
               key={l.id}
-              style={({ pressed }) => [styles.lesson, pressed && styles.pressed]}
+              style={({ pressed, hovered }) => [styles.lesson, wide && styles.lessonWide, wide && hovered && styles.lessonHover, pressed && styles.pressed]}
               onPress={() => router.push(`/lesson/${l.id}`)}
               accessibilityRole="button"
               accessibilityLabel={`${i + 1}. ${l.title}${isDone ? `, ${t.learn.completed}` : ''}`}
@@ -65,6 +68,7 @@ export default function LearnScreen() {
             </Pressable>
           );
         })}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -73,6 +77,10 @@ export default function LearnScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   container: { padding: 24, paddingTop: 52, paddingBottom: 40 },
+  containerWide: { width: '100%', maxWidth: 1120, alignSelf: 'center', padding: 40, paddingTop: 40 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: 12 },
+  lessonWide: { width: '31.5%', flexGrow: 1, alignItems: 'flex-start', borderWidth: 1, borderColor: C.border, borderBottomColor: C.border, borderRadius: 16, padding: 20 },
+  lessonHover: { borderColor: C.text },
   pressed: { opacity: 0.7 },
   // Light, see-through gray card with a thin dark border.
   quiz: {

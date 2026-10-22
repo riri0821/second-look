@@ -13,6 +13,7 @@ import { addHistory, getHistory } from '../../lib/storage';
 import { timeAgo } from '../../lib/time';
 import PageMeta from '../../components/PageMeta';
 import { useLanguage } from '../../i18n';
+import { PAGE_MAX, useWide } from '../../lib/layout';
 
 // One link and nothing else, like "bit.ly/3xK9" or "https://bdo-login.top".
 const isJustALink = s => /^(https?:\/\/)?[^\s/]+\.[a-z]{2,}(\/\S*)?$/i.test(s.trim());
@@ -23,6 +24,7 @@ const INPUT_MAX = 280;
 
 export default function CheckScreen() {
   const { t, lang, toggle } = useLanguage();
+  const wide = useWide();
   const [text, setText] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -67,7 +69,7 @@ export default function CheckScreen() {
       setResult(data);
       await addHistory(input, data);
       setRecent((await getHistory()).slice(0, 3));
-      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+      if (!wide) setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     } catch {
       setError(t.check.error);
     } finally {
@@ -81,8 +83,9 @@ export default function CheckScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <PageMeta title="Check a message" description={'Paste a suspicious text, email or link and Second Look tells you in plain words whether it looks like a scam, and why.'} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView ref={scrollRef} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <View style={styles.header}>
+        <ScrollView ref={scrollRef} contentContainerStyle={[styles.container, wide && styles.containerWide]} keyboardShouldPersistTaps="handled">
+          <View style={wide ? styles.left : null}>
+          {!wide && <View style={styles.header}>
             <Text style={styles.brand} accessibilityRole="header">Second Look</Text>
             <View style={styles.headerRight}>
               <Pressable style={styles.aboutBtn} hitSlop={8} onPress={toggle} accessibilityRole="button" accessibilityLabel={`Language: ${t.languageName}. Switch to ${t.switchTo}`}>
@@ -96,7 +99,7 @@ export default function CheckScreen() {
                 </Pressable>
               </Link>
             </View>
-          </View>
+          </View>}
 
           <Text style={type.h1} accessibilityRole="header">{t.check.title}</Text>
           <Text style={[type.sub, styles.intro]}>{t.check.intro}</Text>
@@ -132,9 +135,9 @@ export default function CheckScreen() {
             </Pressable>
           </View>
 
-          {loading && <View style={{ marginTop: 28 }}><ResultSkeleton /></View>}
           {slow && <Text style={styles.note}>{t.check.slow}</Text>}
           {error ? <Text style={styles.error}>{error}</Text> : null}
+          {!wide && loading && <View style={{ marginTop: 28 }}><ResultSkeleton /></View>}
 
           {!text && !result && (
             <Pressable onPress={() => setText(t.check.example)} hitSlop={8} style={styles.exampleLink} accessibilityRole="button">
@@ -142,7 +145,7 @@ export default function CheckScreen() {
             </Pressable>
           )}
 
-          {result && (
+          {!wide && result && (
             <View style={{ marginTop: 28 }}>
               <ResultCard result={result} />
               <ResultActions result={result} />
@@ -152,7 +155,7 @@ export default function CheckScreen() {
             </View>
           )}
 
-          {!result && recent.length > 0 && (
+          {(wide || !result) && recent.length > 0 && (
             <View style={styles.recent}>
               <View style={styles.recentHead}>
                 <Text style={type.h2} accessibilityRole="header">{t.check.recent}</Text>
@@ -176,6 +179,27 @@ export default function CheckScreen() {
               })}
             </View>
           )}
+          </View>
+
+          {wide && (
+            <View style={styles.right}>
+              {loading ? <ResultSkeleton /> : result ? (
+                <>
+                  <ResultCard result={result} />
+                  <ResultActions result={result} />
+                  <Pressable style={({ pressed }) => [button.secondary, { marginTop: 14 }, pressed && styles.pressed]} onPress={startOver} accessibilityRole="button">
+                    <Text style={button.secondaryText}>{t.check.checkAnother}</Text>
+                  </Pressable>
+                </>
+              ) : (
+                <View style={styles.empty}>
+                  <Ionicons name="shield-checkmark-outline" size={40} color={C.faint} />
+                  <Text style={styles.emptyTitle}>{t.check.resultHere}</Text>
+                  <Text style={styles.emptyText}>{t.check.resultHereSub}</Text>
+                </View>
+              )}
+            </View>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -185,6 +209,12 @@ export default function CheckScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   container: { padding: 24, paddingTop: 12, paddingBottom: 40 },
+  containerWide: { flexDirection: 'row', alignItems: 'flex-start', gap: 48, width: '100%', maxWidth: PAGE_MAX, alignSelf: 'center', padding: 40, paddingTop: 40 },
+  left: { flex: 1, minWidth: 0 },
+  right: { flex: 1, minWidth: 0 },
+  empty: { alignItems: 'center', justifyContent: 'center', gap: 10, padding: 40, minHeight: 360, borderRadius: 18, borderWidth: 1.5, borderStyle: 'dashed', borderColor: C.border },
+  emptyTitle: { fontSize: T.M, fontWeight: '700', color: C.text, textAlign: 'center' },
+  emptyText: { fontSize: T.M, color: C.muted, textAlign: 'center', lineHeight: 24, maxWidth: 380 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 },
   brand: { fontSize: T.M, fontWeight: '800', color: C.text },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 16 },

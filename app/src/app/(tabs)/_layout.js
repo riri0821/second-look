@@ -6,6 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { C, T } from '../../components/theme';
 import { isOnboarded } from '../../lib/storage';
 import { useLanguage } from '../../i18n';
+import TopNav from '../../components/TopNav';
+import { useWide } from '../../lib/layout';
 
 // Custom label so the larger text is never clipped by the default label box.
 const label = (text) => ({ color }) => (
@@ -19,6 +21,7 @@ const icon = (name) => ({ color, focused }) => (
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
+  const wide = useWide();
   const [onboarded, setOnboardedState] = useState(null);
   useEffect(() => { isOnboarded().then(setOnboardedState); }, []);
 
@@ -27,8 +30,11 @@ export default function TabsLayout() {
 
   return (
     <Tabs
+      // Computer screens get a website-style navigation bar at the top instead of bottom tabs.
+      tabBar={wide ? props => <TopNav {...props} /> : undefined}
       screenOptions={{
         headerShown: false,
+        tabBarPosition: wide ? 'top' : 'bottom',
         tabBarActiveTintColor: C.text,
         tabBarInactiveTintColor: C.faint,
         // Taller than default so the larger labels fit.
