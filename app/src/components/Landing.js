@@ -40,12 +40,11 @@ export default function Landing({ checker, result, scrollRef }) {
       <View style={[styles.wrap, styles.section]}>
         <Text style={styles.sectionTitle} accessibilityRole="header">{s.howTitle}</Text>
         <View style={styles.steps}>
-          {s.steps.map((step, i) => (
+          {s.steps.map(step => (
             <View key={step.title} style={styles.step}>
               <View style={styles.stepIcon}>
                 <Ionicons name={step.icon} size={24} color="#fff" />
               </View>
-              <Text style={styles.stepNum}>{i + 1}</Text>
               <Text style={styles.stepTitle}>{step.title}</Text>
               <Text style={styles.body}>{step.body}</Text>
             </View>
@@ -132,8 +131,7 @@ const styles = StyleSheet.create({
   steps: { flexDirection: 'row', gap: 32, marginTop: 36 },
   step: { flex: 1 },
   stepIcon: { width: 52, height: 52, borderRadius: 14, backgroundColor: C.text, alignItems: 'center', justifyContent: 'center' },
-  stepNum: { fontSize: T.S, fontWeight: '700', color: C.faint, marginTop: 20 },
-  stepTitle: { fontSize: T.M, fontWeight: '800', color: C.text, marginTop: 6, marginBottom: 6 },
+  stepTitle: { fontSize: T.M, fontWeight: '800', color: C.text, marginTop: 20, marginBottom: 6 },
 
   greyBand: { backgroundColor: '#F6F6F7' },
   tiles: { flexDirection: 'row', gap: 20 },
