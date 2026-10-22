@@ -1,6 +1,7 @@
 # Second Look
 
-A scam checker for text messages, emails and links, built for people in the Philippines.
+A scam checker for text messages, emails and links, built for everyone, with people in the Philippines
+as one of its main audiences.
 
 Paste a message you're not sure about. Second Look tells you if it looks like a scam, explains why in
 plain words, and says what to do next. It works in English and Filipino, and it never stores the
