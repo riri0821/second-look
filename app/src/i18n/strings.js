@@ -6,6 +6,26 @@ export const STRINGS = {
     languageName: 'English',
     switchTo: 'Filipino',
 
+    site: {
+      privacy: 'Privacy',
+      heroTitle: 'Check any message before you click.',
+      heroSub: 'Paste a text, email or link. Second Look tells you in plain words if it looks like a scam, why, and what to do next.',
+      badges: ['Free', 'Private, nothing is stored', 'English and Filipino'],
+      howTitle: 'How it works',
+      steps: [
+        { icon: 'clipboard-outline', title: 'Copy and paste', body: 'Copy the message or link that feels off and paste it into the box.' },
+        { icon: 'search-outline', title: 'We check it', body: 'Second Look looks for fake websites, hidden links and the tricks scammers use.' },
+        { icon: 'shield-checkmark-outline', title: 'Know what to do', body: 'You get a clear answer, the reasons behind it, and safe next steps.' },
+      ],
+      learnTitle: 'Learn to spot scams yourself',
+      learnSub: 'Short lessons with real-looking examples. Each one takes a minute or two.',
+      allLessons: 'See all lessons',
+      privacyTitle: 'Your messages stay private',
+      privacyBody: 'We check your message and then forget it. Nothing you paste is saved on our side, and we never ask for your name, number or an account.',
+      readPolicy: 'Read the privacy policy',
+      footer: 'Second Look is a safety aid. No check is perfect. If you are unsure, contact the company directly using its official app or website.',
+    },
+
     tabs: { check: 'Check', learn: 'Learn', history: 'History' },
 
     verdicts: {
@@ -156,6 +176,26 @@ export const STRINGS = {
   fil: {
     languageName: 'Filipino',
     switchTo: 'English',
+
+    site: {
+      privacy: 'Privacy',
+      heroTitle: 'Suriin muna ang mensahe bago mag-click.',
+      heroSub: 'I-paste ang text, email o link. Sasabihin ng Second Look sa simpleng salita kung mukha itong scam, bakit, at ano ang susunod na gagawin.',
+      badges: ['Libre', 'Pribado, walang naiimbak', 'Ingles at Filipino'],
+      howTitle: 'Paano ito gumagana',
+      steps: [
+        { icon: 'clipboard-outline', title: 'Kopyahin at i-paste', body: 'Kopyahin ang kahina-hinalang mensahe o link at i-paste sa kahon.' },
+        { icon: 'search-outline', title: 'Susuriin namin', body: 'Hinahanap ng Second Look ang pekeng website, nakatagong link at mga panloloko ng scammer.' },
+        { icon: 'shield-checkmark-outline', title: 'Alamin ang gagawin', body: 'Makakakuha ka ng malinaw na sagot, ang dahilan, at ligtas na susunod na hakbang.' },
+      ],
+      learnTitle: 'Matutong kilalanin ang scam',
+      learnSub: 'Maiikling aralin na may mga halimbawang mukhang totoo. Isa o dalawang minuto lang bawat isa.',
+      allLessons: 'Tingnan lahat ng aralin',
+      privacyTitle: 'Pribado ang mga mensahe mo',
+      privacyBody: 'Sinusuri namin ang mensahe mo at kinakalimutan pagkatapos. Walang naiimbak sa amin, at hindi namin hinihingi ang pangalan, numero o account mo.',
+      readPolicy: 'Basahin ang privacy policy',
+      footer: 'Ang Second Look ay pantulong sa kaligtasan. Walang pagsusuring perpekto. Kung hindi sigurado, kontakin mismo ang kumpanya gamit ang opisyal nilang app o website.',
+    },
 
     tabs: { check: 'Suriin', learn: 'Matuto', history: 'Kasaysayan' },
 

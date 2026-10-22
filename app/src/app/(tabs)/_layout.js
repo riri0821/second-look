@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { C, T } from '../../components/theme';
 import { isOnboarded } from '../../lib/storage';
 import { useLanguage } from '../../i18n';
-import SideNav from '../../components/SideNav';
+import SiteHeader from '../../components/SiteHeader';
 import { useWide } from '../../lib/layout';
 
 // Custom label so the larger text is never clipped by the default label box.
@@ -30,11 +30,11 @@ export default function TabsLayout() {
 
   return (
     <Tabs
-      // Computer screens get a sidebar on the left instead of bottom tabs.
-      tabBar={wide ? props => <SideNav {...props} /> : undefined}
+      // Computer screens get a website header at the top instead of bottom tabs.
+      tabBar={wide ? props => <SiteHeader {...props} /> : undefined}
       screenOptions={{
         headerShown: false,
-        tabBarPosition: wide ? 'left' : 'bottom',
+        tabBarPosition: wide ? 'top' : 'bottom',
         tabBarActiveTintColor: C.text,
         tabBarInactiveTintColor: C.faint,
         // Taller than default so the larger labels fit.

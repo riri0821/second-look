@@ -8,7 +8,7 @@ import { C, VERDICTS, button, type, T } from '../../components/theme';
 import ResultCard from '../../components/ResultCard';
 import ResultActions from '../../components/ResultActions';
 import { ResultSkeleton } from '../../components/Skeleton';
-import { Card, DesktopPage } from '../../components/Desktop';
+import Landing from '../../components/Landing';
 import { checkMessage } from '../../lib/api';
 import { addHistory, getHistory } from '../../lib/storage';
 import { timeAgo } from '../../lib/time';
@@ -159,25 +159,11 @@ export default function CheckScreen() {
     return (
       <View style={{ flex: 1 }}>
         {meta}
-        <DesktopPage title={t.check.title} intro={t.check.intro} scrollRef={scrollRef}>
-          <View style={styles.columns}>
-            <Card style={styles.column}>{inputArea}</Card>
-            <Card style={styles.column}>
-              {loading ? <ResultSkeleton /> : result ? resultArea : (
-                <View style={styles.empty}>
-                  <Ionicons name="shield-checkmark-outline" size={40} color={C.faint} />
-                  <Text style={styles.emptyTitle}>{t.check.resultHere}</Text>
-                  <Text style={styles.emptyText}>{t.check.resultHereSub}</Text>
-                </View>
-              )}
-            </Card>
-          </View>
-          {recent.length > 0 && (
-            <Card title={t.check.recent} right={<Link href="/history" style={styles.seeAll}>{t.check.seeAll}</Link>} style={{ marginTop: 24 }}>
-              {recentRows}
-            </Card>
-          )}
-        </DesktopPage>
+        <Landing
+          scrollRef={scrollRef}
+          checker={inputArea}
+          result={loading ? <ResultSkeleton /> : result ? resultArea : null}
+        />
       </View>
     );
   }
