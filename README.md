@@ -24,6 +24,13 @@ Try the website at [secondlook.tamara-dev.com](https://secondlook.tamara-dev.com
 Real bank messages that warn people *not* to share their OTP are recognized as safe. That case was a
 real false alarm during testing and is now covered by tests.
 
+## Limits
+
+Second Look is not perfect. It looks for warning signs, so a new kind of scam it hasn't seen can get
+through, and a real message can sometimes be flagged. A "no red flags" result does not prove a
+message is safe. When in doubt, contact the company yourself using the number on your card or their
+official app, never the one in the message.
+
 ## Other features
 
 - Six short lessons on spotting scams and a 12-question quiz, with Philippine examples
