@@ -153,7 +153,7 @@ export default function CheckScreen() {
     );
   });
 
-  const meta = <PageMeta title="Check a message" description={'Paste a suspicious text, email or link and Second Look tells you in plain words whether it looks like a scam, and why.'} />;
+  const meta = <PageMeta fullTitle="Second Look: Scam Checker" description={'Paste a suspicious text, email or link and Second Look tells you in plain words whether it looks like a scam, and why.'} />;
 
   if (wide) {
     return (

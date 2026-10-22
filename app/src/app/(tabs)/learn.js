@@ -7,7 +7,7 @@ import { C, VERDICTS, type, T } from '../../components/theme';
 import { lessonsFor } from '../../data/lessons';
 import { getLessonsDone } from '../../lib/storage';
 import PageMeta from '../../components/PageMeta';
-import { Card, DesktopPage } from '../../components/Desktop';
+import { DesktopPage } from '../../components/Desktop';
 import { fill, useLanguage } from '../../i18n';
 import { PAGE_MAX, useWide } from '../../lib/layout';
 
@@ -42,11 +42,11 @@ export default function LearnScreen() {
             <Ionicons name="arrow-forward" size={24} color={C.text} />
           </Pressable>
 
-          <Card
-            title={t.learn.lessons}
-            right={<Text style={styles.progress}>{fill(t.learn.done, { done: done.length, total: lessons.length })}</Text>}
-            style={{ marginTop: 24 }}
-          >
+          <View style={{ marginTop: 40 }}>
+            <View style={styles.lessonsHead}>
+              <Text style={styles.lessonsTitle} accessibilityRole="header">{t.learn.lessons}</Text>
+              <Text style={styles.progress}>{fill(t.learn.done, { done: done.length, total: lessons.length })}</Text>
+            </View>
             <View style={styles.grid}>
               {lessons.map((l, i) => {
                 const isDone = done.includes(l.id);
@@ -70,7 +70,7 @@ export default function LearnScreen() {
                 );
               })}
             </View>
-          </Card>
+          </View>
         </DesktopPage>
       </View>
     );
@@ -133,8 +133,10 @@ export default function LearnScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   container: { padding: 24, paddingTop: 52, paddingBottom: 40 },
+  lessonsHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 },
+  lessonsTitle: { fontSize: T.M, fontWeight: '800', color: C.text },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
-  tile: { width: '31.8%', flexGrow: 1, borderWidth: 1, borderColor: C.border, borderRadius: 14, padding: 20 },
+  tile: { width: '31.8%', flexGrow: 1, backgroundColor: C.bg, borderWidth: 1, borderColor: C.border, borderRadius: 14, padding: 20 },
   tileTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cardHover: { borderColor: C.text },
   quizWide: { flexDirection: 'row', alignItems: 'center', gap: 20, backgroundColor: C.bg, borderRadius: 16, borderWidth: 1, borderColor: C.border, padding: 24 },

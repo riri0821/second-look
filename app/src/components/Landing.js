@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { C, T } from './theme';
 import { useLanguage } from '../i18n';
 import { lessonsFor } from '../data/lessons';
+import SiteFooter from './SiteFooter';
 
 const MAX = 1200;
 
@@ -93,16 +94,7 @@ export default function Landing({ checker, result, scrollRef }) {
         </View>
       </View>
 
-      {/* Footer */}
-      <View style={[styles.wrap, styles.footer]}>
-        <View style={styles.footerBrand}>
-          <View style={styles.logo}>
-            <Ionicons name="eye" size={14} color="#fff" />
-          </View>
-          <Text style={styles.footerName}>Second Look</Text>
-        </View>
-        <Text style={styles.footerText}>{s.footer}</Text>
-      </View>
+      <SiteFooter />
     </ScrollView>
   );
 }
@@ -147,9 +139,4 @@ const styles = StyleSheet.create({
   lightBtn: { paddingHorizontal: 20, paddingVertical: 14, borderRadius: 12, backgroundColor: '#fff' },
   lightBtnText: { fontSize: T.M, fontWeight: '700', color: C.text },
 
-  footer: { paddingTop: 36, paddingBottom: 48, flexDirection: 'row', alignItems: 'flex-start', gap: 48 },
-  footerBrand: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  logo: { width: 24, height: 24, borderRadius: 7, backgroundColor: C.text, alignItems: 'center', justifyContent: 'center' },
-  footerName: { fontSize: T.M, fontWeight: '800', color: C.text },
-  footerText: { flex: 1, fontSize: T.S, lineHeight: 22, color: C.muted },
 });
