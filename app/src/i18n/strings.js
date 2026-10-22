@@ -116,6 +116,9 @@ export const STRINGS = {
       older: 'Older',
       pageOf: 'Page {n} of {total}',
       deleteLabel: 'Delete this check',
+      colResult: 'Result',
+      colMessage: 'Message',
+      colChecked: 'Checked',
     },
 
     time: { justNow: 'Just now', minAgo: '{n} min ago', hrAgo: '{n} hr ago', yesterday: 'Yesterday' },
@@ -264,6 +267,9 @@ export const STRINGS = {
       older: 'Mas luma',
       pageOf: 'Pahina {n} sa {total}',
       deleteLabel: 'Burahin ang pagsusuring ito',
+      colResult: 'Resulta',
+      colMessage: 'Mensahe',
+      colChecked: 'Sinuri',
     },
 
     time: { justNow: 'Ngayon lang', minAgo: '{n} minuto ang nakalipas', hrAgo: '{n} oras ang nakalipas', yesterday: 'Kahapon' },

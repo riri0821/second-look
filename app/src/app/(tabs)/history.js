@@ -8,6 +8,7 @@ import { RowSkeleton } from '../../components/Skeleton';
 import { clearHistory, getHistory, removeHistory } from '../../lib/storage';
 import { timeAgo } from '../../lib/time';
 import PageMeta from '../../components/PageMeta';
+import { Card, DesktopPage } from '../../components/Desktop';
 import { fill, useLanguage } from '../../i18n';
 import { useWide } from '../../lib/layout';
 
@@ -43,10 +44,98 @@ export default function HistoryScreen() {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   }
 
+  if (wide) {
+    const pager = pages > 1 && (
+      <View style={styles.pagerWide}>
+        <Text style={styles.pageText}>{fill(h.pageOf, { n: current + 1, total: pages })}</Text>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {[[current - 1, current === 0, 'chevron-back', h.newer], [current + 1, current === pages - 1, 'chevron-forward', h.older]].map(([to, off, icon, label]) => (
+            <Pressable key={label} disabled={off} onPress={() => goTo(to)} style={({ hovered }) => [styles.pageBtnWide, off && styles.disabled, hovered && !off && styles.rowHover]} accessibilityRole="button" accessibilityLabel={label}>
+              {icon === 'chevron-back' && <Ionicons name={icon} size={18} color={C.text} />}
+              <Text style={styles.pageBtnText}>{label}</Text>
+              {icon === 'chevron-forward' && <Ionicons name={icon} size={18} color={C.text} />}
+            </Pressable>
+          ))}
+        </View>
+      </View>
+    );
+    return (
+      <View style={{ flex: 1 }}>
+        <PageMeta title="History" description={'Your past message checks, saved only on this phone. Look at a result again or delete it anytime.'} />
+        <DesktopPage
+          scrollRef={scrollRef}
+          title={h.title}
+          intro={h.privacy}
+          actions={items?.length ? (
+            <Pressable
+              style={({ hovered }) => [styles.clearWide, hovered && styles.rowHover]}
+              onPress={() => confirm(h.deleteAllTitle, h.deleteAllBody, h, async () => { await clearHistory(); setPage(0); load(); })}
+              accessibilityRole="button"
+            >
+              <Ionicons name="trash-outline" size={18} color={C.text} />
+              <Text style={styles.pageBtnText}>{h.deleteAll}</Text>
+            </Pressable>
+          ) : null}
+        >
+          <Card style={{ padding: 0, overflow: 'hidden' }}>
+            {items === null ? (
+              <View style={{ padding: 24 }}>{[0, 1, 2, 3].map(n => <RowSkeleton key={n} />)}</View>
+            ) : items.length === 0 ? (
+              <View style={styles.emptyWide}>
+                <Ionicons name="time-outline" size={40} color={C.faint} />
+                <Text style={[type.body, { textAlign: 'center' }]}>{h.empty}</Text>
+                <Text style={[type.sub, { textAlign: 'center' }]}>{h.emptySub}</Text>
+                <Pressable style={({ pressed }) => [button.primary, { marginTop: 12, paddingHorizontal: 28 }, pressed && styles.pressed]} onPress={() => router.navigate('/')} accessibilityRole="button">
+                  <Text style={button.primaryText}>{h.checkAMessage}</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <>
+                <View style={[styles.tr, styles.th]}>
+                  <Text style={[styles.thText, styles.colResult]}>{h.colResult}</Text>
+                  <Text style={[styles.thText, styles.colMessage]}>{h.colMessage}</Text>
+                  <Text style={[styles.thText, styles.colTime]}>{h.colChecked}</Text>
+                  <View style={styles.colAction} />
+                </View>
+                {shown.map(e => {
+                  const v = VERDICTS[e.result.verdict];
+                  return (
+                    <View key={e.id} style={[styles.tr, { paddingVertical: 0, paddingRight: 24 }]}>
+                    <Pressable onPress={() => router.push(`/result/${e.id}`)} style={({ hovered }) => [styles.trMain, hovered && styles.rowHover]} accessibilityRole="button">
+                      <View style={[styles.colResult, styles.resultCell]}>
+                        <View style={[styles.icon, { backgroundColor: v.color, marginTop: 0, width: 28, height: 28 }]}>
+                          <Ionicons name={v.icon} size={15} color="#fff" />
+                        </View>
+                        <Text style={[styles.verdict, { color: v.color }]} numberOfLines={1}>{t.verdicts[e.result.verdict].label}</Text>
+                      </View>
+                      <Text style={[styles.cellText, styles.colMessage]} numberOfLines={1}>{e.text}</Text>
+                      <Text style={[styles.time, styles.colTime]}>{timeAgo(e.at, t.time)}</Text>
+                    </Pressable>
+                      <Pressable
+                        hitSlop={8}
+                        style={({ hovered }) => [styles.colAction, styles.trash, hovered && { backgroundColor: C.border }]}
+                        accessibilityRole="button"
+                        accessibilityLabel={h.deleteLabel}
+                        onPress={() => confirm(h.deleteOne, h.deleteOneBody, h, async () => { await removeHistory(e.id); load(); })}
+                      >
+                        <Ionicons name="trash-outline" size={18} color={C.muted} />
+                      </Pressable>
+                    </View>
+                  );
+                })}
+              </>
+            )}
+          </Card>
+          {pager}
+        </DesktopPage>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <PageMeta title="History" description={'Your past message checks, saved only on this phone. Look at a result again or delete it anytime.'} />
-      <ScrollView ref={scrollRef} contentContainerStyle={[styles.container, wide && styles.containerWide]}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.container}>
         <Text style={type.h1} accessibilityRole="header">{h.title}</Text>
         <View style={styles.privacy}>
           <Ionicons name="lock-closed" size={16} color={C.muted} />
@@ -138,7 +227,23 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   container: { padding: 24, paddingTop: 52, paddingBottom: 40 },
-  containerWide: { width: '100%', maxWidth: 900, alignSelf: 'center', padding: 40, paddingTop: 40 },
+  tr: { flexDirection: 'row', alignItems: 'center', gap: 20, paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.border },
+  trMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 20, paddingLeft: 24, marginLeft: -24, paddingVertical: 16 },
+  th: { backgroundColor: '#FAFAFA', paddingVertical: 12 },
+  thText: { fontSize: T.S, fontWeight: '700', color: C.muted },
+  colResult: { width: 230 },
+  resultCell: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  colMessage: { flex: 1, minWidth: 0 },
+  colTime: { width: 130, textAlign: 'right' },
+  colAction: { width: 36, alignItems: 'center' },
+  trash: { padding: 8, borderRadius: 8 },
+  cellText: { fontSize: T.M, color: C.text },
+  rowHover: { backgroundColor: '#FAFAFA' },
+  emptyWide: { alignItems: 'center', gap: 8, paddingVertical: 64, paddingHorizontal: 24 },
+  pagerWide: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 },
+  pageBtnWide: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: C.border, backgroundColor: C.bg },
+  pageBtnText: { fontSize: T.M, fontWeight: '600', color: C.text },
+  clearWide: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: C.border, backgroundColor: C.bg },
   pressed: { opacity: 0.7 },
   disabled: { opacity: 0.25 },
   pager: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 20 },
