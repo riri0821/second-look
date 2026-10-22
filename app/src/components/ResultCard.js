@@ -1,4 +1,4 @@
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C, VERDICTS, T, type } from './theme';
 import { useLanguage } from '../i18n';
@@ -59,16 +59,6 @@ export default function ResultCard({ result }) {
                 <Text style={styles.reason}>{s}</Text>
               </View>
             ))}
-            {result.verdict === 'danger' && (
-              <Pressable
-                style={({ pressed }) => [styles.report, pressed && { opacity: 0.7 }]}
-                onPress={() => Linking.openURL('tel:1326')}
-                accessibilityRole="button"
-              >
-                <Ionicons name="call-outline" size={20} color={C.text} />
-                <Text style={styles.reportText}>{t.result.reportPH}</Text>
-              </Pressable>
-            )}
           </View>
         )}
       </View>
@@ -96,9 +86,4 @@ const styles = StyleSheet.create({
   nextTitle: { fontSize: T.M, fontWeight: '800', color: C.text },
   stepRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 12, gap: 12 },
   stepNum: { width: 26, height: 26, borderRadius: 13, backgroundColor: C.text, color: '#fff', fontSize: T.S, fontWeight: '700', textAlign: 'center', lineHeight: 26, overflow: 'hidden' },
-  report: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 18,
-    minHeight: 56, borderRadius: 14, borderWidth: 1.5, borderColor: C.text, paddingHorizontal: 16,
-  },
-  reportText: { fontSize: T.M, fontWeight: '700', color: C.text, flexShrink: 1, textAlign: 'center' },
 });

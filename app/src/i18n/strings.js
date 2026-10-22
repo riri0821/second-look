@@ -35,7 +35,6 @@ export const STRINGS = {
           'If anyone asks for money, a code or a password, stop.',
         ],
       },
-      reportPH: 'Report to CICC (call 1326)',
     },
 
     check: {
@@ -137,7 +136,6 @@ export const STRINGS = {
       ],
       language: 'Language',
       privacyPolicy: 'Read the full privacy policy',
-      reportPH: 'Report a scam in the Philippines (CICC hotline 1326)',
       reportUS: 'Report a scam in the US (FTC)',
       version: 'Version {v}',
     },
@@ -150,7 +148,7 @@ export const STRINGS = {
     tabs: { check: 'Suriin', learn: 'Matuto', history: 'Kasaysayan' },
 
     verdicts: {
-      danger: { label: 'Malamang scam', hint: 'Huwag i-click ang link at huwag sumagot.' },
+      danger: { label: 'Pwedeng ito ay scam', hint: 'Huwag i-click ang link at huwag sumagot.' },
       suspicious: { label: 'Mag-ingat', hint: 'May ilang babala. Kumpirmahin muna sa nagpadala sa ibang paraan.' },
       no_red_flags: { label: 'Walang nakitang babala', hint: 'Walang kahina-hinala, pero walang pagsusuring perpekto.' },
     },
@@ -165,7 +163,7 @@ export const STRINGS = {
       nextTitle: 'Ano ang gagawin ngayon',
       next: {
         danger: [
-          'Huwag i-click ang link at huwag sumagot, kahit para lang sabihing tumigil sila.',
+          'Huwag i-click ang link at huwag sumagot.',
           'I-block ang nagpadala at burahin ang mensahe.',
           'Kung binanggit ang bangko o e-wallet mo, kontakin sila gamit ang numero sa card mo o ang opisyal nilang app.',
           'Kung nakapagbigay ka na ng detalye o pera, tawagan agad ang bangko mo.',
@@ -173,10 +171,9 @@ export const STRINGS = {
         suspicious: [
           'Huwag munang i-click ang link.',
           'Kontakin ang kumpanya o tao sa ibang paraan, gamit ang numero o app na pinagkakatiwalaan mo.',
-          'Kung may humingi ng pera, code o password, huminto ka na.',
+          'Huwag magtiwala kung may humingi ng pera, code o password.',
         ],
       },
-      reportPH: 'I-report sa CICC (tumawag sa 1326)',
     },
 
     check: {
@@ -278,7 +275,6 @@ export const STRINGS = {
       ],
       language: 'Wika',
       privacyPolicy: 'Basahin ang buong privacy policy (Ingles)',
-      reportPH: 'Mag-report ng scam sa Pilipinas (CICC hotline 1326)',
       reportUS: 'Mag-report ng scam sa US (FTC)',
       version: 'Bersyon {v}',
     },
