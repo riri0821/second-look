@@ -33,7 +33,9 @@ export default function CheckScreen() {
   const [error, setError] = useState('');
   const [recent, setRecent] = useState([]);
   const [inputHeight, setInputHeight] = useState(INPUT_MIN);
+  const [pasteHelp, setPasteHelp] = useState(false);
   const scrollRef = useRef(null);
+  const inputRef = useRef(null);
 
   useFocusEffect(useCallback(() => { getHistory().then(h => setRecent(h.slice(0, 5))); }, []));
 
@@ -45,8 +47,20 @@ export default function CheckScreen() {
   }, [loading]);
 
   async function paste() {
-    const clip = await Clipboard.getStringAsync();
-    if (!clip) return;
+    let clip = '';
+    try {
+      // Phone browsers often refuse clipboard access (Firefox never allows it). Read it directly
+      // during the tap, and if that is refused, point the person to the browser's own Paste.
+      clip = Platform.OS === 'web' ? await navigator.clipboard.readText() : await Clipboard.getStringAsync();
+    } catch {}
+    if (!clip) {
+      if (Platform.OS === 'web') {
+        setPasteHelp(true);
+        inputRef.current?.focus();
+      }
+      return;
+    }
+    setPasteHelp(false);
     setText(clip);
     setResult(null);
     // A pasted link is checked right away; a longer message waits for Check it.
@@ -84,6 +98,7 @@ export default function CheckScreen() {
   const inputArea = (
     <>
       <TextInput
+        ref={inputRef}
         style={[styles.input, { height: wide ? Math.max(inputHeight, 200) : inputHeight }]}
         onContentSizeChange={e => setInputHeight(Math.min(INPUT_MAX, Math.max(INPUT_MIN, e.nativeEvent.contentSize.height + 2)))}
         scrollEnabled={inputHeight >= INPUT_MAX}
@@ -91,7 +106,7 @@ export default function CheckScreen() {
         placeholder={t.check.placeholder}
         placeholderTextColor={C.faint}
         value={text}
-        onChangeText={v => { setText(v); setResult(null); }}
+        onChangeText={v => { setText(v); setResult(null); setPasteHelp(false); }}
         autoCapitalize="none"
         autoCorrect={false}
         accessibilityLabel={t.check.inputLabel}
@@ -112,6 +127,7 @@ export default function CheckScreen() {
           <Text style={button.primaryText}>{loading ? t.check.checking : t.check.checkIt}</Text>
         </Pressable>
       </View>
+      {pasteHelp && !text && <Text style={styles.note}>{t.check.pasteHelp}</Text>}
       {slow && <Text style={styles.note}>{t.check.slow}</Text>}
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {!text && !result && (
