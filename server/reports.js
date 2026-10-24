@@ -1,7 +1,7 @@
 // Scam reports and result feedback: input validation and the request handlers.
 // Nothing reaches the database until it has passed these checks.
 import { createHmac } from 'node:crypto';
-import { asSingleLink, registrableDomain } from './analyze.js';
+import { asSingleLink, hostOf, registrableDomain } from './analyze.js';
 export { REPORT_THRESHOLD } from './analyze.js';
 import { addFeedback, addReport } from './db.js';
 
@@ -16,7 +16,7 @@ export function validateReport(body) {
   if (!input || input.length > 2000) throw new Error('missing url');
   const url = asSingleLink(input);
   if (!url) throw new Error('not a link');
-  const host = new URL(url).hostname.toLowerCase();
+  const host = hostOf(url);
   if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(host)) throw new Error('not a website name');
   return registrableDomain(host);
 }

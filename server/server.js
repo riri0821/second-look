@@ -30,14 +30,20 @@ export function clientAddress(req, trustProxy = process.env.TRUST_PROXY === '1')
 const json = (res, status, body) => res.writeHead(status, { 'Content-Type': 'application/json' }).end(JSON.stringify(body));
 
 // Reads a JSON body, refusing anything over the size limit. Returns null after answering 413/400.
+// The bytes are joined before decoding, so a letter split between two chunks stays whole.
+const MAX_CHARS = 20000;
 async function readJson(req, res) {
-  let body = '';
+  const chunks = [];
+  let bytes = 0;
   for await (const chunk of req) {
-    body += chunk;
-    if (body.length > 20000) {
-      json(res, 413, { error: 'Message is too long' });
-      return null;
-    }
+    chunks.push(chunk);
+    bytes += chunk.length;
+    if (bytes > MAX_CHARS * 4) break; // no character takes more than 4 bytes
+  }
+  const body = Buffer.concat(chunks).toString('utf8');
+  if (body.length > MAX_CHARS) {
+    json(res, 413, { error: 'Message is too long' });
+    return null;
   }
   try {
     const data = JSON.parse(body);
@@ -50,16 +56,19 @@ async function readJson(req, res) {
 async function handleAnalyze(req, res, { linkOnly = false } = {}) {
   const data = await readJson(req, res);
   if (!data) return;
+  const { text, url, lang } = data;
+  const input = linkOnly ? url : text;
+  if (typeof input !== 'string' || !input.trim()) return json(res, 400, { error: linkOnly ? 'missing url' : 'missing text' });
+  if (linkOnly && !asSingleLink(input)) return json(res, 400, { error: 'not a link' });
+  const language = SUPPORTED_LANGS.includes(lang) ? lang : 'en';
+  // A message that is only a link gets the direct link check.
+  const direct = linkOnly || asSingleLink(input);
   try {
-    const { text, url, lang } = data;
-    const input = linkOnly ? url : text;
-    if (typeof input !== 'string' || !input.trim()) throw new Error(linkOnly ? 'missing url' : 'missing text');
-    const language = SUPPORTED_LANGS.includes(lang) ? lang : 'en';
-    // A message that is only a link gets the direct link check.
-    const direct = linkOnly || asSingleLink(input);
     json(res, 200, { ...(await (direct ? analyzeLink(input, process.env, language) : analyze(input, process.env, language))), mode: direct ? 'link' : 'message' });
   } catch (e) {
-    json(res, 400, { error: e.message });
+    // Unexpected errors are logged, never sent back.
+    console.error('check error:', e.message);
+    json(res, 500, { error: 'Could not check right now' });
   }
 }
 

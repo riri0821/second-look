@@ -13,6 +13,8 @@ test('reports are reduced to a plain website name', () => {
   assert.equal(validateReport({ url: 'https://secure.bdo-login.top/verify?x=1' }), 'bdo-login.top');
   assert.equal(validateReport({ url: 'gcash-promo.online' }), 'gcash-promo.online');
   assert.equal(validateReport({ url: 'shop.example.com.ph/x' }), 'example.com.ph');
+  assert.equal(validateReport({ url: 'http://bdo-login.top./' }), 'bdo-login.top');
+  assert.equal(validateReport({ url: 'https://bdo-login.github.io/' }), 'bdo-login.github.io');
 });
 
 test('reports that are not a public website name are refused', () => {

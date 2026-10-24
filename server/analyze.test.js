@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { analyze, brandInText, extractUrls, staticChecks, textChecks, unwrapLink } from './analyze.js';
+import { analyze, brandInText, extractUrls, isPrivateIp, publicLookup, registrableDomain, staticChecks, textChecks, unwrapLink } from './analyze.js';
 
 const reasons = flags => flags.map(f => f.reason).join(' | ');
 const offline = {}; // no API keys
@@ -115,4 +115,48 @@ test('recognizes a message that is just a link', async () => {
   assert.equal(asSingleLink('hello'), null);
   const r = await analyzeLink('http://paypa1-secure-login.xyz/verify', offline);
   assert.notEqual(r.verdict, 'no_red_flags');
+});
+
+test('a broken link hidden in a link does not stop the check', async () => {
+  assert.equal(unwrapLink('https://bdo-login.top/x?a=http://[').target, 'https://bdo-login.top/x?a=http://[');
+  const r = await analyze('BDO: verify at https://bdo-login.top/x?a=http://[', offline);
+  assert.notEqual(r.verdict, 'no_red_flags');
+});
+
+test('internal addresses written as IPv6 are refused', () => {
+  for (const ip of ['::ffff:7f00:1', '::ffff:127.0.0.1', '::ffff:a9fe:a9fe', '::1', '::', 'fe90::1', 'fec0::1', 'fd00::1', '64:ff9b::7f00:1', '2002:7f00:1::'])
+    assert.ok(isPrivateIp(ip), ip);
+  for (const ip of ['8.8.8.8', '::ffff:808:808', '2606:4700::1111']) assert.ok(!isPrivateIp(ip), ip);
+});
+
+test('a website name that leads to an internal address is refused when connecting', async () => {
+  const err = await new Promise(resolve => publicLookup('localhost', {}, e => resolve(e)));
+  assert.equal(err?.code, 'EPRIVATE');
+});
+
+test('a "don\'t" before a colon does not hide the scam request after it', () => {
+  assert.match(reasons(textChecks("Don't ignore this: send your OTP code to us now")), /security code/);
+  assert.match(reasons(textChecks('Do not delay - send your OTP code to us now')), /security code/);
+});
+
+test('website names in a message are checked even without http', () => {
+  assert.deepEqual(extractUrls('Your BDO account is locked. Visit bdo-verify.top now.'), ['http://bdo-verify.top/']);
+  assert.deepEqual(extractUrls('Email juan@gmail.com, e.g. Mr.Smith or notes.txt'), []);
+});
+
+test('a trailing dot does not change the website', () => {
+  assert.deepEqual(staticChecks('http://evil.top./').map(f => f.code), ['http', 'ending']);
+  assert.deepEqual(staticChecks('https://bdo.com.ph./').map(f => f.code), []);
+  assert.equal(registrableDomain('evil.top.'), 'evil.top');
+});
+
+test('each site on free hosting is its own website', () => {
+  assert.equal(registrableDomain('scam1.github.io'), 'scam1.github.io');
+  assert.equal(registrableDomain('login.x.pages.dev'), 'x.pages.dev');
+  assert.equal(registrableDomain('www.bdo.com.ph'), 'bdo.com.ph');
+});
+
+test('an @ in the path is not the @ trick', () => {
+  assert.equal(staticChecks('https://medium.com/@someone').length, 0);
+  assert.deepEqual(staticChecks('https://www.bdo.com.ph@evil.top/').map(f => f.code).includes('at'), true);
 });
