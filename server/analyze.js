@@ -1,6 +1,9 @@
 // Core analysis: pulls links out of a message, runs checks on each, and scores risk.
-import dns from 'node:dns/promises';
+import dns from 'node:dns';
+import http from 'node:http';
+import https from 'node:https';
 import net from 'node:net';
+import { getDomain } from 'tldts';
 import { BRAND_LIST, COMMON_WORDS, GENERIC_IN_HOSTS } from './brands.js';
 import { say } from './messages.js';
 import { reportCount } from './db.js';
@@ -16,10 +19,11 @@ const RISKY_TLDS = new Set([
   'zip', 'mov', 'xyz', 'top', 'click', 'link', 'shop', 'live', 'icu', 'buzz', 'rest', 'cfd', 'sbs',
   'monster', 'quest', 'cam', 'tk', 'ml', 'ga', 'cf', 'gq', 'online', 'site', 'vip', 'cyou', 'bond', 'win',
 ]);
-// Two-part endings, so "bdo.com.ph" is treated as one website, not "com.ph".
-const SECOND_LEVEL = new Set([
-  'com.ph', 'gov.ph', 'net.ph', 'org.ph', 'edu.ph', 'co.uk', 'org.uk', 'gov.uk', 'ac.uk',
-  'com.au', 'gov.au', 'co.jp', 'com.br', 'co.nz', 'co.in', 'com.mx', 'com.sg', 'com.my', 'co.id',
+// Endings that make a website name like "bdo-login.top" stand out in a message even without
+// "http" or a "/" after it. Kept to well-known ones so "e.g." or "Mr.Smith" are not links.
+const BARE_TLDS = new Set([
+  ...RISKY_TLDS, 'com', 'net', 'org', 'info', 'biz', 'io', 'co', 'me', 'app', 'dev', 'ph', 'us', 'uk',
+  'au', 'ca', 'in', 'sg', 'my', 'id', 'jp', 'br', 'mx', 'nz', 'ly', 'cc', 'tv', 'ws', 'to', 'pw', 'ru', 'cn',
 ]);
 
 // Trusted websites that forward you to another address given in the link itself.
@@ -116,15 +120,24 @@ function revealLinks(text) {
   return t;
 }
 
-export function extractUrls(text) {
-  const re = /\b((?:https?:\/\/|www\.)[^\s<>"']+|[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}\/[^\s<>"']*)/gi;
-  const found = new Set();
+export const extractUrls = text => findLinks(text).map(l => l.href);
+
+// Each link found, and whether it was only a website name ("agoda.com") rather than a full link.
+function findLinks(text) {
+  // A website name with no "http" or path ("visit bdo-verify.top now") counts only with a
+  // well-known ending, and never right after "@" (that is an email address).
+  const re = /(?<![@\w.-])((?:https?:\/\/|www\.)[^\s<>"']+|[a-z0-9-]+(?:\.[a-z0-9-]+)*\.([a-z]{2,})(?:\/[^\s<>"']*)?)(?![@\w-])/gi;
+  const found = new Map();
   for (const m of revealLinks(text).matchAll(re)) {
-    let u = m[1].replace(/[).,!?]+$/, '');
+    let u = m[1].replace(/[).,!?:;\]]+$/, '');
+    const bare = !/^(https?:\/\/|www\.)/i.test(u) && !u.includes('/');
+    if (bare && !BARE_TLDS.has(m[2].toLowerCase())) continue;
     if (!/^https?:\/\//i.test(u)) u = 'http://' + u;
-    try { found.add(new URL(u).href); } catch { /* not a URL */ }
+    if (!URL.canParse(u)) continue;
+    const href = new URL(u).href;
+    if (!found.has(href) || !bare) found.set(href, { href, bare });
   }
-  return [...found].slice(0, 5);
+  return [...found.values()].slice(0, 5);
 }
 
 // Classic edit distance, used to spot lookalikes like "paypa1".
@@ -140,10 +153,14 @@ function distance(a, b) {
   return dp[a.length][b.length];
 }
 
+// The website name without a trailing dot: "evil.top." and "evil.top" are the same site.
+export const hostOf = url => new URL(url).hostname.toLowerCase().replace(/\.$/, '');
+
+// The part of a host one owner controls: "bdo.com.ph", and on free hosting "scam1.github.io",
+// so one scam on a shared host never marks every site on it. Uses the Public Suffix List.
 export function registrableDomain(host) {
-  const parts = host.split('.');
-  const lastTwo = parts.slice(-2).join('.');
-  return SECOND_LEVEL.has(lastTwo) ? parts.slice(-3).join('.') : lastTwo;
+  const h = host.toLowerCase().replace(/\.$/, '');
+  return getDomain(h, { allowPrivateDomains: true }) ?? h;
 }
 
 const onDomain = (host, domain) => host === domain || host.endsWith('.' + domain);
@@ -172,14 +189,15 @@ function impersonatedBrand(host) {
 // Checks that only look at the link itself; no network needed.
 export function staticChecks(url, lang = 'en') {
   const u = new URL(url);
-  const host = u.hostname.toLowerCase();
+  const host = hostOf(url);
   const flags = [];
   const add = (points, key, details) => flags.push({ points, code: key, reason: say(lang, key, details) });
   const ending = host.split('.').pop();
 
   if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) add(30, 'ip');
   if (host.includes('xn--')) add(30, 'punycode');
-  if (u.username || url.includes('@')) add(25, 'at');
+  // "https://bdo.com.ph@evil.top" sends you to evil.top; an "@" later in the link is harmless.
+  if (u.username || u.password) add(25, 'at');
   if (u.protocol === 'http:') add(5, 'http');
   if (RISKY_TLDS.has(ending)) add(15, 'ending', { ending });
   if (host.split('.').length > 4) add(10, 'long');
@@ -203,7 +221,8 @@ export function unwrapLink(url) {
     try { u = new URL(current); } catch { break; }
     const known = REDIRECTORS.find(r => r.host.test(u.hostname) && r.path.test(u.pathname));
     const params = known ? known.params : [...u.searchParams.keys()];
-    const inner = params.map(p => u.searchParams.get(p)).find(v => v && /^https?:\/\//i.test(v));
+    // Only a value that really is a link counts, so a broken one can't make the check fail.
+    const inner = params.map(p => u.searchParams.get(p)).find(v => v && /^https?:\/\//i.test(v) && URL.canParse(v));
     if (!inner) break;
     via.push({ host: u.hostname, known: Boolean(known) });
     current = inner;
@@ -211,45 +230,79 @@ export function unwrapLink(url) {
   return { target: current, via };
 }
 
-async function withTimeout(promise, ms = 6000) {
-  return Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
-}
+const TIMEOUT = 6000;
 
-function isPrivateIp(ip) {
+export function isPrivateIp(ip) {
   if (net.isIPv4(ip)) {
     const [a, b] = ip.split('.').map(Number);
     return a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) ||
       (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || a >= 224;
   }
+  if (!net.isIPv6(ip)) return true;
   const v6 = ip.toLowerCase();
-  if (v6.startsWith('::ffff:')) return isPrivateIp(v6.slice(7));
-  return v6 === '::1' || v6 === '::' || v6.startsWith('fc') || v6.startsWith('fd') || v6.startsWith('fe80');
+  // IPv4 inside IPv6, written either way: "::ffff:127.0.0.1" or "::ffff:7f00:1".
+  const mapped = v6.match(/^::ffff:(?:0:)?(?:([\d.]+)|([0-9a-f]{1,4}):([0-9a-f]{1,4}))$/);
+  if (mapped) {
+    if (mapped[1]) return isPrivateIp(mapped[1]);
+    const hi = parseInt(mapped[2], 16), lo = parseInt(mapped[3], 16);
+    return isPrivateIp([hi >> 8, hi & 255, lo >> 8, lo & 255].join('.'));
+  }
+  // "::" and "::1", old IPv4-compatible forms, unique local (fc/fd), link and site local (fe80-feff),
+  // multicast (ff), and the ranges that carry an IPv4 address inside (6to4 2002::, NAT64 64:ff9b::).
+  return v6.startsWith('::') || /^f[cd]/.test(v6) || /^fe[89a-f]/.test(v6) || v6.startsWith('ff') ||
+    v6.startsWith('2002:') || v6.startsWith('64:ff9b:');
 }
 
 // The server fetches links people send it, so never let it reach internal networks.
-async function isPublicUrl(url) {
+function isPublicUrl(url) {
   const u = new URL(url);
   if (!['http:', 'https:'].includes(u.protocol)) return false;
   const host = u.hostname.replace(/^\[|\]$/g, '');
-  const addrs = net.isIP(host) ? [{ address: host }] : await dns.lookup(host, { all: true });
-  return addrs.length > 0 && addrs.every(a => !isPrivateIp(a.address));
+  return !net.isIP(host) || !isPrivateIp(host);
+}
+
+// Looks up a website name and refuses internal addresses. Used when the connection is made, so
+// the address checked is the address connected to (a name can't switch to an internal one in between).
+export function publicLookup(hostname, options, callback) {
+  dns.lookup(hostname, { ...options, all: true }, (err, addrs) => {
+    if (err) return callback(err);
+    if (!addrs.length || addrs.some(a => isPrivateIp(a.address))) {
+      return callback(Object.assign(new Error('internal address'), { code: 'EPRIVATE' }));
+    }
+    if (options.all) return callback(null, addrs);
+    callback(null, addrs[0].address, addrs[0].family);
+  });
+}
+
+// One HEAD request to a public address only. Resolves to { status, location }.
+function head(url) {
+  return new Promise((resolve, reject) => {
+    const req = (url.startsWith('https:') ? https : http).request(url, {
+      method: 'HEAD', lookup: publicLookup, timeout: TIMEOUT, agent: false,
+    }, res => {
+      res.resume();
+      resolve({ status: res.statusCode, location: res.headers.location });
+    });
+    req.on('timeout', () => req.destroy(new Error('timeout')));
+    req.on('error', reject);
+    req.end();
+  });
 }
 
 // Follows redirects (shorteners) without downloading the page body.
 async function resolveRedirects(url) {
   let current = url;
   for (let i = 0; i < 5; i++) {
-    if (!(await isPublicUrl(current))) break;
-    const res = await withTimeout(fetch(current, { method: 'HEAD', redirect: 'manual' }));
-    const next = res.headers.get('location');
-    if (res.status < 300 || res.status >= 400 || !next) break;
-    current = unwrapLink(new URL(next, current).href).target;
+    if (!isPublicUrl(current)) break;
+    const { status, location } = await head(current);
+    if (status < 300 || status >= 400 || !location || !URL.canParse(location, current)) break;
+    current = unwrapLink(new URL(location, current).href).target;
   }
   return current;
 }
 
 async function domainAgeDays(host) {
-  const res = await withTimeout(fetch(`https://rdap.org/domain/${registrableDomain(host)}`));
+  const res = await fetch(`https://rdap.org/domain/${registrableDomain(host)}`, { signal: AbortSignal.timeout(TIMEOUT) });
   if (!res.ok) return null;
   const data = await res.json();
   const reg = data.events?.find(e => e.eventAction === 'registration');
@@ -257,8 +310,9 @@ async function domainAgeDays(host) {
 }
 
 async function safeBrowsing(url, key) {
-  const res = await withTimeout(fetch(`https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${key}`, {
+  const res = await fetch(`https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${key}`, {
     method: 'POST',
+    signal: AbortSignal.timeout(TIMEOUT),
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       client: { clientId: 'second-look', clientVersion: '0.2.0' },
@@ -269,14 +323,14 @@ async function safeBrowsing(url, key) {
         threatEntries: [{ url }],
       },
     }),
-  }));
+  });
   const data = await res.json();
   return (data.matches || []).length > 0;
 }
 
 async function virusTotal(url, key) {
   const id = Buffer.from(url).toString('base64url');
-  const res = await withTimeout(fetch(`https://www.virustotal.com/api/v3/urls/${id}`, { headers: { 'x-apikey': key } }));
+  const res = await fetch(`https://www.virustotal.com/api/v3/urls/${id}`, { headers: { 'x-apikey': key }, signal: AbortSignal.timeout(TIMEOUT) });
   if (!res.ok) return null;
   const stats = (await res.json()).data?.attributes?.last_analysis_stats;
   return stats ? stats.malicious + stats.suspicious : null;
@@ -289,21 +343,22 @@ async function checkUrl(url, env, lang) {
   const { target, via } = unwrapLink(url);
   if (via.length) {
     const first = via[0];
-    const hidden = new URL(target).hostname;
+    const hidden = hostOf(target);
     if (first.known) add(20, 'disguised', { via: first.host, target: hidden });
     else add(10, 'hidden', { target: hidden });
   }
 
   let finalUrl = target;
   try { finalUrl = await resolveRedirects(target); } catch { /* unreachable is fine */ }
-  if (finalUrl !== target) add(0, 'leadsTo', { host: new URL(finalUrl).hostname });
+  const host = hostOf(finalUrl);
+  const moved = host !== hostOf(target); // http to https on the same site is not a different website
+  if (moved) add(0, 'leadsTo', { host });
 
   // Tricks like "@" live in the original link; everything else is judged on where it really goes.
   if (url !== target) flags.push(...staticChecks(url, lang).filter(f => f.code === 'at'));
   flags.push(...staticChecks(target, lang));
-  if (finalUrl !== target) flags.push(...staticChecks(finalUrl, lang).filter(f => !SHORTENERS.has(new URL(finalUrl).hostname)));
+  if (moved) flags.push(...staticChecks(finalUrl, lang));
 
-  const host = new URL(finalUrl).hostname;
   if (!isAnyBrandSite(host)) {
     try {
       const age = await domainAgeDays(host);
@@ -329,7 +384,9 @@ async function checkUrl(url, env, lang) {
       if (hits) add(Math.min(80, 20 * hits), 'vendors', { hits });
     } catch {}
   }
-  return { url, finalUrl, flags };
+  // Each reason counts once per link, even if both the link and where it leads show it.
+  const seen = new Set();
+  return { url, finalUrl, flags: flags.filter(f => !seen.has(f.code) && seen.add(f.code)) };
 }
 
 // Which brand does the message claim to be from? Everyday words like "target" only
@@ -355,9 +412,11 @@ export function brandInText(text) {
 // are left out before looking for scam tactics.
 const NEGATION = /\b(do not|don't|dont|never|will not|won't|huwag|wag|hindi (namin|kailanman|kailangan))\b/i;
 
+// Splits at sentence ends, at colons and dashes ("Don't ignore this: send the OTP"),
+// and at commas that start a new instruction ("..., but send it to us").
 export function withoutWarnings(text) {
   return text
-    .split(/[.!?\n;]+|,\s*(?=(?:but|pero|tapos|then)\b)/i)
+    .split(/[.!?\n;:]+|\s[-\u2013\u2014]+\s|,\s*(?=(?:but|pero|tapos|then)\b)/i)
     .filter(part => !NEGATION.test(part))
     .join('. ');
 }
@@ -374,16 +433,20 @@ export function textChecks(text, lang = 'en') {
   return flags;
 }
 
+// One link that can't be checked must never stop the rest of the message being checked.
+const safeCheckUrl = (url, env, lang) => checkUrl(url, env, lang).catch(() => ({ url, finalUrl: url, flags: [] }));
+
 export async function analyze(text, env = process.env, lang = 'en') {
-  const urls = extractUrls(text);
-  const links = await Promise.all(urls.map(u => checkUrl(u, env, lang)));
+  const found = findLinks(text);
+  const links = await Promise.all(found.map(l => safeCheckUrl(l.href, env, lang)));
   const messageFlags = textChecks(text, lang);
 
-  // A message that names a brand but links somewhere else is a classic scam.
+  // A message that names a brand but links somewhere else is a classic scam. A website name
+  // written as plain text ("your purchase at agoda.com") is often just the shop, so it doesn't count.
   const brand = brandInText(text);
-  const offsite = brand && links.find(l => !isBrandSite(new URL(l.finalUrl).hostname, brand));
+  const offsite = brand && links.find((l, i) => !found[i].bare && !isBrandSite(hostOf(l.finalUrl), brand));
   if (offsite) {
-    messageFlags.push({ points: 25, code: 'claims', reason: say(lang, 'claims', { brand: brand.name, host: new URL(offsite.finalUrl).hostname }) });
+    messageFlags.push({ points: 25, code: 'claims', reason: say(lang, 'claims', { brand: brand.name, host: hostOf(offsite.finalUrl) }) });
   }
 
   return result(links, messageFlags);
@@ -403,7 +466,7 @@ export function asSingleLink(input) {
   const candidate = /^https?:\/\//i.test(s) ? s : `http://${s}`;
   try {
     const u = new URL(candidate);
-    return /\.[a-z]{2,}$/i.test(u.hostname) || net.isIP(u.hostname) ? u.href : null;
+    return /\.[a-z]{2,}\.?$/i.test(u.hostname) || net.isIP(u.hostname) ? u.href : null;
   } catch {
     return null;
   }
@@ -413,5 +476,5 @@ export function asSingleLink(input) {
 export async function analyzeLink(input, env = process.env, lang = 'en') {
   const url = asSingleLink(input);
   if (!url) throw new Error('not a link');
-  return result([await checkUrl(url, env, lang)], []);
+  return result([await safeCheckUrl(url, env, lang)], []);
 }

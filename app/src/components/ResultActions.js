@@ -7,11 +7,17 @@ import { reportSite, sendFeedback } from '../lib/api';
 
 // "Was this result right?" and "Report this website as a scam", under a result.
 // Each can be sent once per result; only the website address or the yes/no answer is sent.
+// With several links, the one with the most warning signs is the one reported.
+const riskiest = links => links.reduce((best, l) => {
+  const points = l.flags.reduce((s, f) => s + f.points, 0);
+  return !best || points > best.points ? { link: l, points } : best;
+}, null)?.link;
+
 export default function ResultActions({ result }) {
   const { t, lang } = useLanguage();
   const [feedback, setFeedback] = useState('idle'); // idle | sending | done | failed
   const [report, setReport] = useState('idle');
-  const site = result.links[0]?.finalUrl;
+  const site = riskiest(result.links)?.finalUrl;
 
   async function answer(correct) {
     setFeedback('sending');

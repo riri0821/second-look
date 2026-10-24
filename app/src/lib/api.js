@@ -18,7 +18,8 @@ export async function checkMessage(text, lang = 'en') {
   let res = await post('/v1/analyze', text, lang);
   // Servers deployed before the versioned API only know /analyze.
   if (res.status === 404) res = await post('/analyze', text, lang);
-  const data = await res.json();
+  // A sleeping or restarting server can answer with an HTML page, not JSON.
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || 'Check failed');
   return data;
 }
